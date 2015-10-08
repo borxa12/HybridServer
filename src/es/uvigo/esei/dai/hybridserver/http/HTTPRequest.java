@@ -4,120 +4,70 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class HTTPRequest {
 
 	private BufferedReader bf;
+
+	// Atributos
 	private HTTPRequestMethod method;
 	private String resourceChain;
 	private String[] resourcePath;
 	private String resourceName;
-	private Map<String,String> resourceParameters;
+	private Map<String, String> resourceParameters;
 	private String HTTPVersion;
-	private Map<String,String> headerParameters;
+	private Map<String, String> headerParameters;
 	private String content;
 	private int contentLength;
-	//private String toString;
 
 	public HTTPRequest(Reader reader) throws IOException, HTTPParseException {
 		bf = new BufferedReader(reader);
-		//this.method = null;
-		//this.resourceChain = null;
-		//this.resourcePath = null;
-		//this.resourceName = null;
-		//this.resourceParameters = null;
-		//this.HTTPVersion = null;
-		//this.headerParameters = null;
-		//this.content = null;
-		//this.contentLength = 0;
-		//this.toString = null;
-		this.createMethod();
-		this.createResourceChain();
-		this.createResourcePath();
-		this.createResourceName();
-		this.createResourceParameters();
-		this.createHttpVersion();
-		this.createHeaderParameters();
-		this.createContent();
-		this.createContentLength();
-	}
-	
-	/**
-	 * Métodos que llaman a los método creadores y devuelven los atributos
-	 */
-	public HTTPRequestMethod getMethod() {
-		return this.method;
-	}
-	
-	public String getResourceChain() {
-		return this.resourceChain;
-	}
-	
-	public String[] getResourcePath() {
-		return this.resourcePath;
-	}
-	
-	public String getResourceName() {
-		return this.resourceName;
-	}
-	
-	public Map<String, String> getResourceParameters() {
-		return this.resourceParameters;
-	}
-	
-	public String getHttpVersion() {
-		return this.HTTPVersion;
-	}
-	
-	public Map<String, String> getHeaderParameters() {
-		return this.headerParameters;
-	}
-	
-	public String getContent() {
-		return this.content;
-	}
-	
-	public int getContentLength() {
-		return this.contentLength;
-	}
-	
-	/**
-	 * Métodos creadores de los atributos
-	 */
-	public void createMethod() {
-		HTTPRequestMethod method = null;
-		try {
-			String linea = bf.readLine();
-			String[] seccion = linea.split(" ");
-			String metodo = seccion[0].trim();
-			method = HTTPRequestMethod.valueOf(metodo);
-		} catch (IOException ioe) {
-			System.err.println(ioe.getMessage());
-		}
-		this.method = method;
-	}
 
-	// "/hello/world.html?country=Spain&province=Ourense&city=Ourense"
-	public void createResourceChain() {
-		String resourceChain = null;
-		String linea;
-		try {
-			linea = bf.readLine();
-			String[] seccion = linea.split(" ");
-			resourceChain = seccion[1];
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
+		/**
+		 * Linea 1
+		 */
+		String linea = bf.readLine();
+		String[] seccion = linea.split(" ");
+		
+		//method
+		String metodo = seccion[0].trim();
+		switch (metodo) {
+			case "HEAD":
+				this.method = HTTPRequestMethod.HEAD;
+				break;
+			case "GET":
+				this.method = HTTPRequestMethod.GET;
+				break;
+			case "POST":
+				this.method = HTTPRequestMethod.POST;
+				break;
+			case "PUT":
+				this.method = HTTPRequestMethod.PUT;
+				break;
+			case "DELETE":
+				this.method = HTTPRequestMethod.DELETE;
+				break;
+			case "TRACE":
+				this.method = HTTPRequestMethod.TRACE;
+				break;
+			case "OPTIONS":
+				this.method = HTTPRequestMethod.OPTIONS;
+				break;
+			case "CONNECT":
+				this.method = HTTPRequestMethod.CONNECT;
+				break;
 		}
-		this.resourceChain = resourceChain;
-	}
+		
+		//resourceChain
+		this.resourceChain = seccion[1];
+		
+		//HTTPVersion
+		this.HTTPVersion = seccion[2].trim();
 
-	// "hello" "world.html"
-	public void createResourcePath() {
-		String[] chain = this.getResourceChain().split("\\?");
+		// ResourcePath
+		String[] chain = this.resourceChain.split("\\?");
 		String algo = "algo";
 		chain[0] = algo.concat(chain[0]);
 		String[] path = chain[0].split("\\/");
@@ -126,164 +76,130 @@ public class HTTPRequest {
 			resourcePath[i] = path[i + 1];
 		}
 		this.resourcePath = resourcePath;
-	}
 
-	// "hello/world.html"
-	public void createResourceName() {
-		String[] resourcePath = this.getResourcePath();
+		// ResourceName
+		String[] rp = this.resourcePath;
 		String resourceName = null;
-		if (resourcePath.length == 0) {
+		if (rp.length == 0) {
 			resourceName = "";
-		} else if (resourcePath.length == 1) {
-			resourceName = resourcePath[0].toString();
-		} else if (resourcePath.length > 1) {
-			resourceName = resourcePath[0];
-			for (int i = 1; i < resourcePath.length; i++) {
+		} else if (rp.length == 1) {
+			resourceName = rp[0].toString();
+		} else if (rp.length > 1) {
+			resourceName = rp[0];
+			for (int i = 1; i < rp.length; i++) {
 				resourceName = resourceName.concat("/");
 				resourceName = resourceName.concat(resourcePath[i]);
 			}
 		}
 		this.resourceName = resourceName;
-	}
+		
+		// Variables de control
+		String[] resourceChain = this.resourceChain.split("\\?");
+		int flag;
+		if (resourceChain.length == 1)
+			flag = 0; // resourceParameters en el resto de lineas
+		else
+			flag = 1; // resourceParameters en primera linea
 
-	// Map<String,String> {"message", "Hello world!!"}
-	public void createResourceParameters() {
+		boolean emptyLine = false; // Bandera de informacion sobre linea vacia
+		
+		// Mapas para resourceParameters y heaerParameters
 		Map<String, String> resourceParameters = new LinkedHashMap<>();
-		String[] resourceChain = this.getResourceChain().split("\\?");
-		if (resourceChain.length == 1) {
-			try {
-				String linea;
-				String reader = "";
-				while ((linea = bf.readLine()) != null) {
-					linea = linea.concat("\r\n");
-					reader = reader.concat(linea);
-				}
-				reader = URLDecoder.decode(reader, "UTF-8");
-				String[] chain = reader.split("\r\n");
-				int pos = 0;
-				for (int i = 0; i < chain.length; i++) {
-					if (chain[i].isEmpty())
-						pos = i;
-				}
-				if (pos == 0) {
-					resourceParameters = new HashMap<>();
-				} else {
-					String[] resource_Chain = chain[pos + 1].split("&");
-					resourceParameters = new HashMap<>();
-					for (int i = 0; i < resource_Chain.length; i++) {
-						String[] aux = resource_Chain[i].split("=");
-						resourceParameters.put(aux[0], aux[1]);
-					}
-				}
-			} catch (IOException ioe) {
-				System.err.println(ioe.getMessage());
-			}
-		} else {
+		Map<String, String> headerParameters = new LinkedHashMap<>();
+		
+		//Busqueda de los resourceParameters en la primera linea
+		if (flag == 1) {
 			String[] parameters = resourceChain[1].split("&");
-			resourceParameters = new HashMap<>();
 			for (int i = 0; i < parameters.length; i++) {
 				String[] param = parameters[i].split("=");
 				resourceParameters.put(param[0], param[1]);
 			}
 		}
 		this.resourceParameters = resourceParameters;
-	}
+		
+		/**
+		 * Resto de lineas
+		 */
+		while ((linea = bf.readLine()) != null) {
 
-	public void createHttpVersion() {
-		String[] aux = null;
-		try {
-			String head = this.bf.readLine();
-			aux = head.split(" ");
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
-		}
-		this.HTTPVersion = aux[2];
-	}
+			String reader1 = URLDecoder.decode(linea, "UTF-8"); // Conversión de la linea a UTF-8
+			
+			// Busqueda de headerParameters
+			if (!reader1.isEmpty() && !emptyLine) {
+				String[] aux = reader1.split(": ");
+				headerParameters.put(aux[0], aux[1]);
+			}
+			
+			// Busqueda de resourceParameters
+			if (flag == 0 && emptyLine) {
+				String[] param_1 = reader1.split("&");
+				for (int i = 0; i < param_1.length; i++) {
+					String[] param_2 = param_1[i].split("=");
+					resourceParameters.put(param_2[0], param_2[1]);
+				}
+			}
+			
+			// Busqueda de content
+			if (emptyLine) {
+				this.content = reader1;
+			}
+			
+			// Busqueda de contentLength
+			if (reader1.contains("Content-Length: ")) {
+				String[] aux = reader1.split(": ");
+				this.contentLength = Integer.parseInt(aux[1]);
+			}
+			
+			// Comprobacion de lectura de linea vacio (variable de control)
+			if (reader1.isEmpty())
+				emptyLine = true;
 
-	public void createHeaderParameters() {
-		Map<String, String> headerParameters = new HashMap<>();
-		try {
-			String linea;
-			String reader = "";
-			while ((linea = bf.readLine()) != null) {
-				linea = linea.concat("\r\n");
-				reader = reader.concat(linea);
-			}
-			reader = URLDecoder.decode(reader, "UTF-8");
-			String[] chain = reader.split("\r\n");
-			ArrayList<String> parameters = new ArrayList<>();
-			for(int i = 1; i < chain.length; i++) {
-				if(chain[i].isEmpty())
-					break;
-				parameters.add(chain[i]);
-			}
-			String[] aux = new String[parameters.size()];
-			for(int i = 0; i < parameters.size(); i++) {
-				aux[i] = parameters.get(i);
-			}
-			for(int i = 0; i < aux.length; i++) {
-				String[] aux2 = aux[i].split(": ");
-				headerParameters.put(aux2[0],aux2[1]);
-			}
-		} catch (IOException ioe) {
-			System.err.println(ioe.getMessage());
 		}
+		
+		// Asignacion de los mapas a sus atributos tras la lectura de todas las lineas
 		this.headerParameters = headerParameters;
+		this.resourceParameters = resourceParameters;
+
 	}
 
-	public void createContent() {
-		String content = "";
-		try {
-			String linea;
-			String reader = "";
-			while ((linea = bf.readLine()) != null) {
-				linea = linea.concat("\r\n");
-				reader = reader.concat(linea);
-			}
-			reader = URLDecoder.decode(reader, "UTF-8");
-			String[] chain = reader.split("\r\n");
-			int pos = 0;
-			for (int i = 0; i < chain.length; i++) {
-				if (chain[i].isEmpty())
-					pos = i;
-			}
-			if (pos == 0) {
-				content = null;
-			} else {
-				content = chain[pos+1];
-			}
-		} catch (IOException ioe) {
-			System.err.println(ioe.getMessage());
-		}
-		this.content = content;
+	public HTTPRequestMethod getMethod() {
+		return this.method;
 	}
 
-	public void createContentLength() {
-		int contentLength = 0;
-		try {
-			String linea;
-			String reader = "";
-			while ((linea = bf.readLine()) != null) {
-				linea = linea.concat("\r\n");
-				reader = reader.concat(linea);
-			}
-			reader = URLDecoder.decode(reader, "UTF-8");
-			String[] chain = reader.split("\r\n");
-			int pos = 0;
-			for (int i = 0; i < chain.length; i++) {
-				if (chain[i].contains("Content-Length: "))
-					pos = i;
-			}
-			if (pos == 0) {
-				contentLength = 0;
-			} else {
-				String[] aux = chain[pos].split(": ");
-				contentLength = Integer.parseInt(aux[1]);
-			}
-		} catch (IOException ioe) {
-			System.err.println(ioe.getMessage());
-		}
-		this.contentLength = contentLength;
+	// "/hello/world.html?country=Spain&province=Ourense&city=Ourense"
+	public String getResourceChain() {
+		return this.resourceChain;
+	}
+
+	// "hello" "world.html"
+	public String[] getResourcePath() {
+		return this.resourcePath;
+	}
+
+	// "hello/world.html"
+	public String getResourceName() {
+		return this.resourceName;
+	}
+
+	// Map<String,String> {"message", "Hello world!!"}
+	public Map<String, String> getResourceParameters() {
+		return this.resourceParameters;
+	}
+
+	public String getHttpVersion() {
+		return this.HTTPVersion;
+	}
+
+	public Map<String, String> getHeaderParameters() {
+		return this.headerParameters;
+	}
+
+	public String getContent() {
+		return this.content;
+	}
+
+	public int getContentLength() {
+		return this.contentLength;
 	}
 
 	@Override

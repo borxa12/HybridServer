@@ -80,25 +80,36 @@ public class HTTPResponse {
 	}
 
 	public void print(Writer writer) throws IOException {
-
 		writer.append(this.getVersion()).append(' ')
 			.append(String.valueOf(this.getStatus().getCode())).append(' ')
-			.append(this.getStatus().getStatus()).append("\r\n");
+			.append(String.valueOf(this.getStatus().getStatus()))
+			.append("\r\n");
 		
-		if (this.headerParameters == null && this.content == null) { //Sin parametros && Sin contenido
-			writer.append("\r\n");
-		} else if (this.headerParameters != null) { // Con parametros
-			for (Entry<String, String> param : this.getParameters().entrySet()) {
-				writer.append(param.getKey()).append(": ").append(param.getValue()).append("\r\n");
+		if(this.getParameters().isEmpty()) {
+			if(this.content == null) {
+				writer.append("\r\n");
+			} else {
+				writer.append("Content-Length: ")
+					.append(String.valueOf(this.getContent().length()))
+					.append("\r\n\r\n")
+					.append(this.getContent());
 			}
-			writer.append("\r\n");
-
-		}
-		if (this.content != null) { // Con cotenido
-			writer.append("Content-Length: ").append(String.valueOf(this.getContent().length()))
-				.append("\r\n");
-			writer.append("\r\n");
-			writer.append(this.getContent());
+		} else {
+			if(this.content == null) {
+				for(Entry<String,String> param : this.getParameters().entrySet()) {
+					writer.append(param.getKey()).append(": ").append(param.getValue())
+						.append("\r\n");
+				}
+				writer.append("\r\n");
+			} else {
+				for(Entry<String,String> param : this.getParameters().entrySet()) {
+					writer.append(param.getKey()).append(": ").append(param.getValue())
+						.append("\r\n");
+				}
+				writer.append("Content-Length: ").append(String.valueOf(this.getContent().length()))
+					.append("\r\n\r\n");
+				writer.append(this.getContent());
+			}	
 		}
 	}
 

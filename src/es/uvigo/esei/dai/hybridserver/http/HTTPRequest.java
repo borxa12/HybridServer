@@ -3,12 +3,15 @@ package es.uvigo.esei.dai.hybridserver.http;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 
 public class HTTPRequest {
-	
+
 	private BufferedReader bf;
-	
+
 	public HTTPRequest(Reader reader) throws IOException, HTTPParseException {
 		bf = new BufferedReader(reader);
 	}
@@ -16,85 +19,199 @@ public class HTTPRequest {
 	public HTTPRequestMethod getMethod() {
 		HTTPRequestMethod method = null;
 		try {
-			String line = bf.readLine();
-			int pos = line.lastIndexOf("\\s");
-			String metodo = line.substring(0,pos-1);
-			for(int i = 0; i < HTTPRequestMethod.values().length; i++) {
-				if(HTTPRequestMethod.values()[i].equals(metodo))
-					method = HTTPRequestMethod.values()[i];
-			}
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
+			String linea = bf.readLine();
+			String[] seccion = linea.split(" ");
+			String metodo = seccion[0].trim();
+			method = HTTPRequestMethod.valueOf(metodo);
+		} catch (IOException ioe) {
+			System.err.println(ioe.getMessage());
 		}
 		return method;
 	}
 
+	// "/hello/world.html?country=Spain&province=Ourense&city=Ourense"
 	public String getResourceChain() {
-		String chain = null;
+		String resourceChain = null;
+		String linea;
 		try {
-			String line = bf.readLine();
-			int pos = line.lastIndexOf("\\s");
-			String substring = line.substring(pos+1,line.length());
-			int pos2 = substring.lastIndexOf("\\s");
-			String substring2 = substring.substring(0,pos2-1);
-			int pos3 = substring2.indexOf('?');
-			chain = substring2.substring(0,pos3-1);
+			linea = bf.readLine();
+			String[] seccion = linea.split(" ");
+			resourceChain = seccion[1];
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
-		return chain;
+		return resourceChain;
 	}
 
+	// "hello" "world.html"
 	public String[] getResourcePath() {
-		String[] path = null;
-		path = this.getResourceChain().split("/");
-		return path;
-	}
-
-	public String getResourceName() {
-		String[] path = this.getResourcePath();
-		return path[path.length];
-	}
-
-	@SuppressWarnings("null")
-	public Map<String, String> getResourceParameters() {
-		Map<String,String> parameters = null;
-		try {
-			String line = bf.readLine();
-			int pos = line.indexOf('?');
-			String substring = line.substring(pos+1,line.length());
-			int pos2 = substring.indexOf("\\s");
-			String substring2 = substring.substring(0,pos2-1);
-			String[] aux = substring2.split("&");
-			for(int i = 0; i < aux.length; i++) {
-				String[] auxP;
-				auxP = aux[i].split("=");
-				parameters.put(auxP[0],auxP[1]);
-			}
-		} catch (IOException e) {
-			System.err.println(e.getMessage());
+		String[] chain = this.getResourceChain().split("\\?");
+		String algo = "algo";
+		chain[0] = algo.concat(chain[0]);
+		String[] path = chain[0].split("\\/");
+		String[] resourcePath = new String[path.length - 1];
+		for (int i = 0; i < path.length - 1; i++) {
+			resourcePath[i] = path[i + 1];
 		}
-		return parameters;
+		return resourcePath;
+	}
+
+	// "hello/world.html"
+	public String getResourceName() {
+		String[] resourcePath = this.getResourcePath();
+		String resourceName = null;
+		if (resourcePath.length == 0) {
+			resourceName = "";
+		} else if (resourcePath.length == 1) {
+			resourceName = resourcePath[0].toString();
+		} else if (resourcePath.length > 1) {
+			resourceName = resourcePath[0];
+			for (int i = 1; i < resourcePath.length; i++) {
+				resourceName = resourceName.concat("/");
+				resourceName = resourceName.concat(resourcePath[i]);
+			}
+		}
+		return resourceName;
+	}
+
+	// Map<String,String> {"message", "Hello world!!"}
+	public Map<String, String> getResourceParameters() {
+		Map<String, String> resourceParameters = new HashMap<>();
+		String[] resourceChain = this.getResourceChain().split("\\?");
+		if (resourceChain.length == 1) {
+			try {
+				String linea;
+				String reader = "";
+				while ((linea = bf.readLine()) != null) {
+					linea = linea.concat("\r\n");
+					reader = reader.concat(linea);
+				}
+				reader = URLDecoder.decode(reader, "UTF-8");
+				String[] chain = reader.split("\r\n");
+				int pos = 0;
+				for (int i = 0; i < chain.length; i++) {
+					if (chain[i].isEmpty())
+						pos = i;
+				}
+				if (pos == 0) {
+					resourceParameters = new HashMap<>();
+				} else {
+					String[] resource_Chain = chain[pos + 1].split("&");
+					resourceParameters = new HashMap<>();
+					for (int i = 0; i < resource_Chain.length; i++) {
+						String[] aux = resource_Chain[i].split("=");
+						resourceParameters.put(aux[0], aux[1]);
+					}
+				}
+			} catch (IOException ioe) {
+				System.err.println(ioe.getMessage());
+			}
+		} else {
+			String[] parameters = resourceChain[1].split("&");
+			resourceParameters = new HashMap<>();
+			for (int i = 0; i < parameters.length; i++) {
+				String[] param = parameters[i].split("=");
+				resourceParameters.put(param[0], param[1]);
+			}
+		}
+		return resourceParameters;
 	}
 
 	public String getHttpVersion() {
-		// TODO Auto-generated method stub
-		return null;
+		String[] aux = null;
+		try {
+			String head = this.bf.readLine();
+			aux = head.split(" ");
+		} catch (IOException e) {
+			System.err.println(e.getMessage());
+		}
+		return aux[2];
 	}
 
 	public Map<String, String> getHeaderParameters() {
-		// TODO Auto-generated method stub
-		return null;
+		Map<String, String> headerParameters = new HashMap<>();
+		try {
+			String linea;
+			String reader = "";
+			while ((linea = bf.readLine()) != null) {
+				linea = linea.concat("\r\n");
+				reader = reader.concat(linea);
+			}
+			reader = URLDecoder.decode(reader, "UTF-8");
+			String[] chain = reader.split("\r\n");
+			ArrayList<String> parameters = new ArrayList<>();
+			for(int i = 1; i < chain.length; i++) {
+				if(chain[i].isEmpty())
+					break;
+				parameters.add(chain[i]);
+			}
+			String[] aux = new String[parameters.size()];
+			for(int i = 0; i < parameters.size(); i++) {
+				aux[i] = parameters.get(i);
+			}
+			for(int i = 0; i < aux.length; i++) {
+				String[] aux2 = aux[i].split(": ");
+				headerParameters.put(aux2[0],aux2[1]);
+			}
+		} catch (IOException ioe) {
+			System.err.println(ioe.getMessage());
+		}
+		return headerParameters;
 	}
 
 	public String getContent() {
-		// TODO Auto-generated method stub
-		return null;
+		String content = "";
+		try {
+			String linea;
+			String reader = "";
+			while ((linea = bf.readLine()) != null) {
+				linea = linea.concat("\r\n");
+				reader = reader.concat(linea);
+			}
+			reader = URLDecoder.decode(reader, "UTF-8");
+			String[] chain = reader.split("\r\n");
+			int pos = 0;
+			for (int i = 0; i < chain.length; i++) {
+				if (chain[i].isEmpty())
+					pos = i;
+			}
+			if (pos == 0) {
+				content = null;
+			} else {
+				content = chain[pos+1];
+			}
+		} catch (IOException ioe) {
+			System.err.println(ioe.getMessage());
+		}
+		return content;
 	}
 
 	public int getContentLength() {
-		// TODO Auto-generated method stub
-		return -1;
+		int contentLength = 0;
+		try {
+			String linea;
+			String reader = "";
+			while ((linea = bf.readLine()) != null) {
+				linea = linea.concat("\r\n");
+				reader = reader.concat(linea);
+			}
+			reader = URLDecoder.decode(reader, "UTF-8");
+			String[] chain = reader.split("\r\n");
+			int pos = 0;
+			for (int i = 0; i < chain.length; i++) {
+				if (chain[i].contains("Content-Length: "))
+					pos = i;
+			}
+			if (pos == 0) {
+				contentLength = 0;
+			} else {
+				String[] aux = chain[pos].split(": ");
+				contentLength = Integer.parseInt(aux[1]);
+			}
+		} catch (IOException ioe) {
+			System.err.println(ioe.getMessage());
+		}
+		return contentLength;
 	}
 
 	@Override

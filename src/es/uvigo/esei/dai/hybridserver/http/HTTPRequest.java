@@ -6,17 +6,89 @@ import java.io.Reader;
 import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class HTTPRequest {
 
 	private BufferedReader bf;
+	private HTTPRequestMethod method;
+	private String resourceChain;
+	private String[] resourcePath;
+	private String resourceName;
+	private Map<String,String> resourceParameters;
+	private String HTTPVersion;
+	private Map<String,String> headerParameters;
+	private String content;
+	private int contentLength;
+	//private String toString;
 
 	public HTTPRequest(Reader reader) throws IOException, HTTPParseException {
 		bf = new BufferedReader(reader);
+		//this.method = null;
+		//this.resourceChain = null;
+		//this.resourcePath = null;
+		//this.resourceName = null;
+		//this.resourceParameters = null;
+		//this.HTTPVersion = null;
+		//this.headerParameters = null;
+		//this.content = null;
+		//this.contentLength = 0;
+		//this.toString = null;
+		this.createMethod();
+		this.createResourceChain();
+		this.createResourcePath();
+		this.createResourceName();
+		this.createResourceParameters();
+		this.createHttpVersion();
+		this.createHeaderParameters();
+		this.createContent();
+		this.createContentLength();
 	}
-
+	
+	/**
+	 * Métodos que llaman a los método creadores y devuelven los atributos
+	 */
 	public HTTPRequestMethod getMethod() {
+		return this.method;
+	}
+	
+	public String getResourceChain() {
+		return this.resourceChain;
+	}
+	
+	public String[] getResourcePath() {
+		return this.resourcePath;
+	}
+	
+	public String getResourceName() {
+		return this.resourceName;
+	}
+	
+	public Map<String, String> getResourceParameters() {
+		return this.resourceParameters;
+	}
+	
+	public String getHttpVersion() {
+		return this.HTTPVersion;
+	}
+	
+	public Map<String, String> getHeaderParameters() {
+		return this.headerParameters;
+	}
+	
+	public String getContent() {
+		return this.content;
+	}
+	
+	public int getContentLength() {
+		return this.contentLength;
+	}
+	
+	/**
+	 * Métodos creadores de los atributos
+	 */
+	public void createMethod() {
 		HTTPRequestMethod method = null;
 		try {
 			String linea = bf.readLine();
@@ -26,11 +98,11 @@ public class HTTPRequest {
 		} catch (IOException ioe) {
 			System.err.println(ioe.getMessage());
 		}
-		return method;
+		this.method = method;
 	}
 
 	// "/hello/world.html?country=Spain&province=Ourense&city=Ourense"
-	public String getResourceChain() {
+	public void createResourceChain() {
 		String resourceChain = null;
 		String linea;
 		try {
@@ -40,11 +112,11 @@ public class HTTPRequest {
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
-		return resourceChain;
+		this.resourceChain = resourceChain;
 	}
 
 	// "hello" "world.html"
-	public String[] getResourcePath() {
+	public void createResourcePath() {
 		String[] chain = this.getResourceChain().split("\\?");
 		String algo = "algo";
 		chain[0] = algo.concat(chain[0]);
@@ -53,11 +125,11 @@ public class HTTPRequest {
 		for (int i = 0; i < path.length - 1; i++) {
 			resourcePath[i] = path[i + 1];
 		}
-		return resourcePath;
+		this.resourcePath = resourcePath;
 	}
 
 	// "hello/world.html"
-	public String getResourceName() {
+	public void createResourceName() {
 		String[] resourcePath = this.getResourcePath();
 		String resourceName = null;
 		if (resourcePath.length == 0) {
@@ -71,12 +143,12 @@ public class HTTPRequest {
 				resourceName = resourceName.concat(resourcePath[i]);
 			}
 		}
-		return resourceName;
+		this.resourceName = resourceName;
 	}
 
 	// Map<String,String> {"message", "Hello world!!"}
-	public Map<String, String> getResourceParameters() {
-		Map<String, String> resourceParameters = new HashMap<>();
+	public void createResourceParameters() {
+		Map<String, String> resourceParameters = new LinkedHashMap<>();
 		String[] resourceChain = this.getResourceChain().split("\\?");
 		if (resourceChain.length == 1) {
 			try {
@@ -114,10 +186,10 @@ public class HTTPRequest {
 				resourceParameters.put(param[0], param[1]);
 			}
 		}
-		return resourceParameters;
+		this.resourceParameters = resourceParameters;
 	}
 
-	public String getHttpVersion() {
+	public void createHttpVersion() {
 		String[] aux = null;
 		try {
 			String head = this.bf.readLine();
@@ -125,10 +197,10 @@ public class HTTPRequest {
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		}
-		return aux[2];
+		this.HTTPVersion = aux[2];
 	}
 
-	public Map<String, String> getHeaderParameters() {
+	public void createHeaderParameters() {
 		Map<String, String> headerParameters = new HashMap<>();
 		try {
 			String linea;
@@ -156,10 +228,10 @@ public class HTTPRequest {
 		} catch (IOException ioe) {
 			System.err.println(ioe.getMessage());
 		}
-		return headerParameters;
+		this.headerParameters = headerParameters;
 	}
 
-	public String getContent() {
+	public void createContent() {
 		String content = "";
 		try {
 			String linea;
@@ -183,10 +255,10 @@ public class HTTPRequest {
 		} catch (IOException ioe) {
 			System.err.println(ioe.getMessage());
 		}
-		return content;
+		this.content = content;
 	}
 
-	public int getContentLength() {
+	public void createContentLength() {
 		int contentLength = 0;
 		try {
 			String linea;
@@ -211,7 +283,7 @@ public class HTTPRequest {
 		} catch (IOException ioe) {
 			System.err.println(ioe.getMessage());
 		}
-		return contentLength;
+		this.contentLength = contentLength;
 	}
 
 	@Override

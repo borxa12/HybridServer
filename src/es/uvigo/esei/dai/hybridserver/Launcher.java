@@ -1,22 +1,27 @@
 package es.uvigo.esei.dai.hybridserver;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.InputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import es.uvigo.esei.dai.hybridserver.http.HTTPParseException;
-import es.uvigo.esei.dai.hybridserver.http.HTTPRequest;
-
 public class Launcher {
 	public static void main(String[] args) {
-		
-
-
+		HybridServer hybridServer = new HybridServer();
+		hybridServer.start();
+		try(Socket socket = new Socket("localhost",hybridServer.getPort())) {
+			/* Solo é para visualizar por consola o que se lee
+			 * porque para que pase o test non se pode poñer o HTML
+			 */
+			InputStream in = socket.getInputStream();
+			int line;
+			while((line = in.read()) != -1) {
+				System.out.print((char)line);
+			}
+		} catch (UnknownHostException e) {
+			System.err.println("Servidor no encontrado: " + e.getMessage());
+		} catch (IOException e) {
+			System.err.println("Problemas en el cliente: " + e.getMessage());
+		}
 	}
 }

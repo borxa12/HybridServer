@@ -7,21 +7,20 @@ import java.net.Socket;
 import java.util.Map;
 import java.util.Properties;
 
-import es.uvigo.esei.dai.hybridserver.http.HTTPRequest;
 import es.uvigo.esei.dai.hybridserver.http.HTTPResponse;
-import es.uvigo.esei.dai.hybridserver.http.HTTPResponseStatus;
 
 public class HybridServer {
+	
 	private static final int SERVICE_PORT = 8888;
     private Thread serverThread;
     private boolean stop;
 
-    private static final String WEB_PAGE = "<html><body><h1>Hola Mundo!!</h1></body></html>";
+    private static final String WEB_PAGE = "Hybrid Server"; //"<html><body><h1>Hola Mundo!!</h1></body></html>";
 
     
     public HybridServer() {
-		// Constructor necesario para los tests de la primera semana
-    	this.start();
+    	// Aqui tiñas cousas que non valian
+    	this.stop = false;
 	}
 
 	public HybridServer(Map<String, String> pages) {
@@ -31,6 +30,7 @@ public class HybridServer {
 	public HybridServer(Properties properties) {
 		// Constructor necesario para los tests de la tercera semana
 	}
+	
     public int getPort() {
         return SERVICE_PORT;
     }
@@ -45,23 +45,22 @@ public class HybridServer {
                             if (stop) {
                                 break;
                             }
-                            // Responder al cliente
-                           /* OutputStream out = socket.getOutputStream();
+                            
+                            // Envio de la página web con la cabecera HTTP
+                            OutputStream out = socket.getOutputStream();
                             final int tam = WEB_PAGE.length();
                             out.write("HTTP/1.1 200 OK\r\n".getBytes());
                             out.write("Content-Type: text/html\r\n".getBytes());
                             out.write(("Content-Length: " + tam + "\r\n").getBytes());
                             out.write("\r\n".getBytes());
                             out.write(WEB_PAGE.getBytes());
-                            out.flush();*/
+                            out.flush();
                             
+                            // Responder al cliente
                             HTTPResponse response = new HTTPResponse();
                             response.setVersion("HTTP/1.1");
                             response.putParameter("Content-Type", "text/html");
                             response.setContent(WEB_PAGE);
-                            
-                            
-                            
                         }
                     }
                 } catch (IOException e) {

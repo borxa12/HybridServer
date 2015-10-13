@@ -58,12 +58,15 @@ public class HTTPRequest {
 			case "CONNECT":
 				this.method = HTTPRequestMethod.CONNECT;
 				break;
+			default: throw new HTTPParseException("Missing Method");
 		}
 		
 		//resourceChain
 		this.resourceChain = seccion[1];
+		if(this.resourceChain.contains("HTTP/1.1")) throw new HTTPParseException("Missing resource");
 		
 		//HTTPVersion
+		if(seccion.length < 3) throw new HTTPParseException("Missing version");
 		this.HTTPVersion = seccion[2].trim();
 
 		// ResourcePath
@@ -127,6 +130,7 @@ public class HTTPRequest {
 			// Busqueda de headerParameters
 			if (!reader1.isEmpty() && !emptyLine) {
 				String[] aux = reader1.split(": ");
+				if(aux.length == 1) throw new HTTPParseException("Invalid header");
 				headerParameters.put(aux[0], aux[1]);
 			}
 			
@@ -163,6 +167,7 @@ public class HTTPRequest {
 	}
 
 	public HTTPRequestMethod getMethod() {
+		//if(this.method == null) new HTTPParseException("Missing Method" + this.toString());
 		return this.method;
 	}
 

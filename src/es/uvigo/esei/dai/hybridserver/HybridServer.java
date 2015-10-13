@@ -16,10 +16,8 @@ public class HybridServer {
     private boolean stop;
 
     private static final String WEB_PAGE = "Hybrid Server"; //"<html><body><h1>Hola Mundo!!</h1></body></html>";
-
     
     public HybridServer() {
-    	// Aqui tiñas cousas que non valian
     	this.stop = false;
 	}
 

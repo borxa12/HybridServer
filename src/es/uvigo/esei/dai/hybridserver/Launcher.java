@@ -7,7 +7,8 @@ import java.net.UnknownHostException;
 
 public class Launcher {
 	public static void main(String[] args) {
-		HybridServer hybridServer = new HybridServer();
+		ServerPages pages = new ServerPages();
+		HybridServer hybridServer = new HybridServer(pages.getPages());
 		hybridServer.start();
 		try(Socket socket = new Socket("localhost",hybridServer.getPort())) {
 			/* Solo é para visualizar por consola o que se lee

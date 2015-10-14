@@ -8,12 +8,15 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
+
 public class HybridServer {
 
 	private static final int SERVICE_PORT = 8888;
 	private Thread serverThread;
 	private boolean stop;
 	private Map<String,String> pages;
+
 
 	//private static final String WEB_PAGE = "Hybrid Server"; // "<html><body><h1>Hola Mundo!!</h1></body></html>";
 
@@ -23,6 +26,8 @@ public class HybridServer {
 
 	public HybridServer(Map<String, String> pages) {
 		this.pages = pages;
+		/*pages.put("1", "Hybrid Server");
+		pages.put("2","<html><body><h1>Hola Mundo!!</h1></body></html>");*/
 	}
 
 	public HybridServer(Properties properties) {
@@ -41,6 +46,7 @@ public class HybridServer {
 					ExecutorService pool = Executors.newFixedThreadPool(50);
 					while (true) {
 						if(stop) break;
+						
 						pool.execute(new Worker(serverSocket.accept(),pages));
 					}
 				} catch (IOException e) {

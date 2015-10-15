@@ -13,7 +13,7 @@ public class HybridServer {
 	private static final int SERVICE_PORT = 8888;
 	private Thread serverThread;
 	private boolean stop;
-	private Map<String,String> pages;
+	private ServerPages pages;
 
 	//private static final String WEB_PAGE = "Hybrid Server"; // "<html><body><h1>Hola Mundo!!</h1></body></html>";
 
@@ -22,7 +22,7 @@ public class HybridServer {
 	}
 
 	public HybridServer(Map<String, String> pages) {
-		this.pages = pages;
+		this.pages = new ServerPages(pages);
 	}
 
 	public HybridServer(Properties properties) {
@@ -40,8 +40,9 @@ public class HybridServer {
 				try (ServerSocket serverSocket = new ServerSocket(HybridServer.SERVICE_PORT)) {
 					ExecutorService pool = Executors.newFixedThreadPool(50);
 					while (true) {
+						Socket socket = serverSocket.accept();
 						if(stop) break;
-						pool.execute(new Worker(serverSocket.accept(),pages));
+						pool.execute(new Worker(socket,pages));
 					}
 				} catch (IOException e) {
 					System.err.println("Error al abrir el socket: " + e.getMessage());

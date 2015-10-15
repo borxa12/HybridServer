@@ -33,32 +33,10 @@ public class HTTPRequest {
 		
 		//method
 		String metodo = seccion[0].trim();
-		switch (metodo) {
-			case "HEAD":
-				this.method = HTTPRequestMethod.HEAD;
-				break;
-			case "GET":
-				this.method = HTTPRequestMethod.GET;
-				break;
-			case "POST":
-				this.method = HTTPRequestMethod.POST;
-				break;
-			case "PUT":
-				this.method = HTTPRequestMethod.PUT;
-				break;
-			case "DELETE":
-				this.method = HTTPRequestMethod.DELETE;
-				break;
-			case "TRACE":
-				this.method = HTTPRequestMethod.TRACE;
-				break;
-			case "OPTIONS":
-				this.method = HTTPRequestMethod.OPTIONS;
-				break;
-			case "CONNECT":
-				this.method = HTTPRequestMethod.CONNECT;
-				break;
-			default: throw new HTTPParseException("Missing Method");
+		try {
+			this.method = HTTPRequestMethod.valueOf(metodo);
+		} catch (IllegalArgumentException | NullPointerException e) {
+			throw new HTTPParseException("Missing Method");
 		}
 		
 		//resourceChain
@@ -123,39 +101,43 @@ public class HTTPRequest {
 		/**
 		 * Resto de lineas
 		 */
-		while ((linea = bf.readLine()) != null) {
-
-			String reader1 = URLDecoder.decode(linea, "UTF-8"); // Conversión de la linea a UTF-8
+		//while ((linea = bf.readLine()) != null && !emptyLine) {
+		while(!emptyLine) {
+			
+			linea = bf.readLine();
+			
+			String read = URLDecoder.decode(linea, "UTF-8"); // Conversión de la linea a UTF-8
 			
 			// Busqueda de headerParameters
-			if (!reader1.isEmpty() && !emptyLine) {
-				String[] aux = reader1.split(": ");
+			if (!read.isEmpty() && !emptyLine) {
+				String[] aux = read.split(": ");
 				if(aux.length == 1) throw new HTTPParseException("Invalid header");
 				headerParameters.put(aux[0], aux[1]);
 			}
 			
-			// Busqueda de resourceParameters
-			if (flag == 0 && emptyLine) {
-				String[] param_1 = reader1.split("&");
-				for (int i = 0; i < param_1.length; i++) {
-					String[] param_2 = param_1[i].split("=");
-					resourceParameters.put(param_2[0], param_2[1]);
-				}
-			}
+//			// Busqueda de resourceParameters
+//			if (flag == 0 && emptyLine) {
+//				String[] param_1 = read.split("&");
+//				for (int i = 0; i < param_1.length; i++) {
+//					String[] param_2 = param_1[i].split("=");
+//					resourceParameters.put(param_2[0], param_2[1]);
+//					System.out.println(resourceParameters);
+//				}
+//			}
 			
-			// Busqueda de content
-			if (emptyLine) {
-				this.content = reader1;
-			}
+//			// Busqueda de content
+//			if (emptyLine) {
+//				this.content = read;
+//			}
 			
 			// Busqueda de contentLength
-			if (reader1.contains("Content-Length: ")) {
-				String[] aux = reader1.split(": ");
+			if (read.contains("Content-Length: ")) {
+				String[] aux = read.split(": ");
 				this.contentLength = Integer.parseInt(aux[1]);
 			}
 			
 			// Comprobacion de lectura de linea vacio (variable de control)
-			if (reader1.isEmpty())
+			if (read.isEmpty())
 				emptyLine = true;
 
 		}
@@ -163,7 +145,23 @@ public class HTTPRequest {
 		// Asignacion de los mapas a sus atributos tras la lectura de todas las lineas
 		this.headerParameters = headerParameters;
 		this.resourceParameters = resourceParameters;
-
+		
+		// Busqueda de content
+		if (emptyLine && headerParameters.containsKey("Content-Length")) {
+			StringBuilder toret = new StringBuilder();
+			for(int i = 0; i < Integer.parseInt(headerParameters.get("Content-Length")); i++) {
+				toret.append((char)bf.read());
+			}
+			String contentReturns = URLDecoder.decode(toret.toString(), "UTF-8"); // Conversión de la linea a UTF-8
+			this.content = contentReturns;
+			if(flag == 0) {
+				String[] param_1 = contentReturns.split("&");
+				for (int i = 0; i < param_1.length; i++) {
+					String[] param_2 = param_1[i].split("=");
+					resourceParameters.put(param_2[0], param_2[1]);
+				}
+			}
+		}
 	}
 
 	public HTTPRequestMethod getMethod() {

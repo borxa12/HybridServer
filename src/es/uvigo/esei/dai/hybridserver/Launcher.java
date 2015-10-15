@@ -4,10 +4,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 
 public class Launcher {
 	public static void main(String[] args) {
-		ServerPages pages = new ServerPages();
+		ServerPages pages = new ServerPages(new HashMap<String,String>());
 		HybridServer hybridServer = new HybridServer(pages.getPages());
 		hybridServer.start();
 		try(Socket socket = new Socket("localhost",hybridServer.getPort())) {

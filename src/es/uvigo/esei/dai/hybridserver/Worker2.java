@@ -13,12 +13,12 @@ import es.uvigo.esei.dai.hybridserver.http.HTTPRequestMethod;
 import es.uvigo.esei.dai.hybridserver.http.HTTPResponse;
 import es.uvigo.esei.dai.hybridserver.http.HTTPResponseStatus;
 
-public class Worker implements Runnable {
+public class Worker2 implements Runnable {
 
 	private Socket socket;
 	private ServerPages WEB_PAGES;
 
-	public Worker(Socket socket, ServerPages pages) {
+	public Worker2(Socket socket, ServerPages pages) {
 		this.socket = socket;
 		this.WEB_PAGES = pages;
 	}

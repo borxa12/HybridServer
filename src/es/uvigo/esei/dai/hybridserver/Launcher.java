@@ -16,6 +16,7 @@ import java.util.Properties;
 
 public class Launcher {
 	public static void main(String[] args) {
+<<<<<<< HEAD
 		//args[0] = new String("config.props");
 
 		try {	FileReader reader = new FileReader(args[0]);
@@ -35,6 +36,12 @@ public class Launcher {
 		HybridServer hybridServer = new HybridServer(pages.getPages());
 		hybridServer.start();
 		Socket socket = new Socket("localhost", hybridServer.getPort());
+=======
+		ServerPages pages = new ServerPages(new HashMap<String, String>());
+		HybridServer hybridServer = new HybridServer(pages.getPages());
+		hybridServer.start();
+		try (Socket socket = new Socket("localhost", hybridServer.getPort())) {
+>>>>>>> origin/master
 			/*
 			 * Solo é para visualizar por consola o que se lee porque para que
 			 * pase o test non se pode poñer o HTML

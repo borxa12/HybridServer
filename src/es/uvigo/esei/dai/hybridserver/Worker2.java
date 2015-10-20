@@ -91,7 +91,7 @@ public class Worker2 implements Runnable {
 		} catch (IOException e) {
 			System.err.println(e.getMessage());
 		} catch (HTTPParseException e) {
-			e.printStackTrace();
+			System.err.println(e.getMessage());
 		}
 	}
 

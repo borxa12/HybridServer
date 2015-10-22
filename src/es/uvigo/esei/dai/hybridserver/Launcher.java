@@ -1,19 +1,22 @@
 package es.uvigo.esei.dai.hybridserver;
 
-import java.beans.Statement;
-import java.io.BufferedReader;
-import java.io.File;
+//import java.beans.Statement;
+//import java.io.BufferedReader;
+//import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 //import java.io.InputStream;
 //import java.net.Socket;
 import java.net.UnknownHostException;
-import java.sql.PreparedStatement;
+//import java.sql.PreparedStatement;
 import java.util.HashMap;
 import java.util.Properties;
 
 public class Launcher {
+	
 	public static void main(String[] args) {
+		
+		
 
 		// args[0] = new String("config.props");
 		boolean param = false;
@@ -33,7 +36,7 @@ public class Launcher {
 //				
 				Properties properties = new Properties();
 				properties.load(reader);
-				System.out.println(properties.toString());
+//				System.out.println(properties.toString()); // SYSO
 				HybridServer hybridServer = new HybridServer(properties);
 				hybridServer.start();
 			} else {

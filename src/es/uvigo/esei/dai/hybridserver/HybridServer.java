@@ -55,7 +55,7 @@ public class HybridServer {
 						if(flag == 0){
 							Socket socket = serverSocket.accept();
 							if(stop) break;
-							pool.execute(new Worker1(socket));
+							pool.execute(new Worker2(socket));
 						}
 						if (flag == 1){
 							Socket socket = serverSocket.accept();
@@ -65,7 +65,7 @@ public class HybridServer {
 						if (flag == 2){
 							Socket socket = serverSocket.accept();
 							if(stop) break;
-							pool.execute(new Worker3(socket,properties));
+							pool.execute(new Worker2(socket,properties));
 						}
 					}
 				} catch (IOException e) {

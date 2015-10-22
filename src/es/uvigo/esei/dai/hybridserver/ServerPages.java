@@ -4,7 +4,9 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-public class ServerPages {
+import es.uvigo.esei.dai.hybridserver.http.HTTPRequest;
+
+public class ServerPages implements Pages {
 	
 	private Map<String,String> pages;
 	
@@ -14,30 +16,40 @@ public class ServerPages {
 		pages.put("2","<html><body><h1>Hola Mundo!!</h1></body></html>");
 	}
 	
-	public void add(String uuid, String content) {
-		pages.put(uuid,content);
+	@Override
+	public void create(String uuid, HTTPRequest request) {
+		pages.put(uuid, request.getResourceParameters().get("html"));
 	}
 	
-	public void remove(String uuid){
-		pages.remove(uuid);
+	@Override
+	public void remove(HTTPRequest request){
+		pages.remove(request.getResourceParameters().get("uuid"));
 	}
 	
-	public String getUUID() {
+	@Override
+	public String get(HTTPRequest request) {
+		return this.pages.get(request.getResourceParameters().get("uuid"));
+	}
+	
+	@Override
+	public String list() {
 		Set<String> uuid = pages.keySet();
 		Iterator<String> it = uuid.iterator();
 		StringBuilder toret = new StringBuilder();
 		while(it.hasNext()) {
-			toret.append("<a href=\"html?uuid=");
+			/*toret.append("<a href=\"html?uuid=");
 			String aux = it.next();
 			toret.append(aux);
 			toret.append("\">");
 			toret.append(aux);
-			toret.append("</a>\r\n");
+			toret.append("</a>\r\n");*/
+			toret.append(this.link(it.next()));
 		}
 		return toret.toString();
 	}
 	
-	public String getUUID(String uuid) {
+	@Override
+	public String link(String uuid) {
 		StringBuilder toret = new StringBuilder();
 		toret.append("<a href=\"html?uuid=");
 		toret.append(uuid);
@@ -47,14 +59,12 @@ public class ServerPages {
 		return toret.toString();
 	}
 	
-	public boolean exists(String uuid) {
-		return this.pages.containsKey(uuid);
+	@Override
+	public boolean exists(HTTPRequest request) {
+		return this.pages.containsKey(request.getResourceParameters().get("uuid"));
 	}
 	
-	public String getContent (String uuid) {
-		return this.pages.get(uuid);
-	}
-
+	// Posible método a eliminar pero Luancher picase
 	public Map<String, String> getPages() {
 		return pages;
 	}

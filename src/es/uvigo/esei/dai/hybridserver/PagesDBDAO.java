@@ -19,9 +19,10 @@ public class PagesDBDAO implements Pages {
 		String query = "INSERT INTO HTML (uuid,content) VALUES(?,?)";
 		try(PreparedStatement statement = this.connection.prepareStatement(query)) {
 			statement.setString(1, uuid);
-			statement.setString(2, request.getContent());
-			if(statement.executeUpdate() != 1)
-				throw new RuntimeException("ERROR: Page can't be inserted.");
+			statement.setString(2, request.getResourceParameters().get("html"));
+//			if(statement.executeUpdate() != 1)
+//				throw new RuntimeException("ERROR: Page can't be inserted.");
+			statement.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -32,8 +33,10 @@ public class PagesDBDAO implements Pages {
 		String query = "DELETE FROM HTML WHERE uuid=?";
 		try(PreparedStatement statement = this.connection.prepareStatement(query)) {
 			statement.setString(1, request.getResourceParameters().get("uuid"));
-			if(statement.executeUpdate() != 1)
-				throw new RuntimeException("ERROR: Page can't be deleted.");
+			
+			//if(statement.executeUpdate() != 1)
+				//throw new RuntimeException("ERROR: Page can't be deleted.");
+			statement.executeUpdate();
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -50,8 +53,9 @@ public class PagesDBDAO implements Pages {
 					content = results.getString("content");
 				}
 			}
-			if(statement.executeUpdate() != 1)
-				throw new RuntimeException("ERROR: Page can't be found.");
+//			
+//			if(statement.executeUpdate() != 1)
+//				throw new RuntimeException("ERROR: Page can't be found.");
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
@@ -61,10 +65,10 @@ public class PagesDBDAO implements Pages {
 	@Override
 	public String list() {
 		StringBuilder content = new StringBuilder();
-		String query = "SELECT uuid FROM HTML";
+		String query = "SELECT uuid FROM html";
 		try(PreparedStatement statement = this.connection.prepareStatement(query)) {
 			try(ResultSet results = statement.executeQuery()) {
-				if(results.next()) {
+				while(results.next()) {
 					content.append(this.link(results.getString("uuid")));
 				}
 			}

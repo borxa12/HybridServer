@@ -17,36 +17,40 @@ import es.uvigo.esei.dai.hybridserver.http.HTTPRequestMethod;
 import es.uvigo.esei.dai.hybridserver.http.HTTPResponse;
 import es.uvigo.esei.dai.hybridserver.http.HTTPResponseStatus;
 
-public class Worker2 implements Runnable {
+public class Worker implements Runnable {
 
 	private Socket socket;
 	private Pages WEB_PAGES;
 	private String WEB;
 	private boolean flag;
 
-	public Worker2(Socket socket) {
+	public Worker(Socket socket) {
 		this.socket = socket;
 		this.WEB = "Hybrid Server";
 		flag = false;
 	}
 
-	public Worker2(Socket socket, ServerPages pages) {
+	public Worker(Socket socket, ServerPages pages) {
 		this.socket = socket;
 		this.WEB_PAGES = pages;
 		flag = true;
 	}
 
-	public Worker2(Socket socket, Properties properties) {
+	public Worker(Socket socket, Properties properties) {
 		this.socket = socket;
-		Connection connection;
+		Connection connection = null;
 		try {
 			connection = DriverManager.getConnection(properties.getProperty("db.url"),
 					properties.getProperty("db.user"), properties.getProperty("db.password"));
 			this.WEB_PAGES = new PagesDBDAO(connection);
+			flag = true;
+			
 		} catch (SQLException e) {
 			e.printStackTrace();
+			this.WEB = "Hybrid Server";
+			flag = false;
 		}
-		flag = true;
+		
 		// PagesDBDAO dataBase = new PagesDBDAO(connection);
 	}
 
@@ -73,10 +77,8 @@ public class Worker2 implements Runnable {
 					if (request.getResourceParameters().get("html") == null)
 						response.setStatus(HTTPResponseStatus.S400);
 					this.WEB_PAGES.create(uuid,request);
-					System.out.println("ENLACE: " + WEB_PAGES.link(uuid));
-					response.setContent(WEB_PAGES.link(uuid));
 					
-					System.err.println(this.WEB_PAGES.exists(request) + WEB_PAGES.link(uuid));
+					response.setContent(WEB_PAGES.link(uuid));
 				}
 
 				// DELETE
@@ -84,6 +86,7 @@ public class Worker2 implements Runnable {
 					if (!WEB_PAGES.exists(request))
 						response.setStatus(HTTPResponseStatus.S404);
 					this.WEB_PAGES.remove(request);
+					
 				}
 
 				// GET
@@ -96,7 +99,7 @@ public class Worker2 implements Runnable {
 							// response.setContent("Hybrid Server");
 							response.setContent(this.WEB_PAGES.list());
 						} else { // Si hay UUID
-							System.err.println(this.WEB_PAGES.exists(request));
+						
 							if (this.WEB_PAGES.exists(request)) {
 								
 								response.setContent(WEB_PAGES.get(request)); // UUIDexistente:visualiza página
@@ -111,8 +114,11 @@ public class Worker2 implements Runnable {
 					}
 
 				}
-			} else
+			} else{
+				
+				response.setStatus(HTTPResponseStatus.S200);
 				response.setContent(WEB);
+				}
 
 			System.out.println("REQUEST: \r\n" + request + "\r\n");
 			System.out.println("RESPONSE: \r\n" + response + "\r\n");

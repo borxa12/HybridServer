@@ -30,21 +30,23 @@ public class HTTPRequest {
 		 */
 		String linea = bf.readLine();
 		String[] seccion = linea.split(" ");
-		
-		//method
+
+		// method
 		String metodo = seccion[0].trim();
 		try {
 			this.method = HTTPRequestMethod.valueOf(metodo);
 		} catch (IllegalArgumentException | NullPointerException e) {
 			throw new HTTPParseException("Missing Method");
 		}
-		
-		//resourceChain
+
+		// resourceChain
 		this.resourceChain = seccion[1];
-		if(this.resourceChain.contains("HTTP/1.1")) throw new HTTPParseException("Missing resource");
-		
-		//HTTPVersion
-		if(seccion.length < 3) throw new HTTPParseException("Missing version");
+		if (this.resourceChain.contains("HTTP/1.1"))
+			throw new HTTPParseException("Missing resource");
+
+		// HTTPVersion
+		if (seccion.length < 3)
+			throw new HTTPParseException("Missing version");
 		this.HTTPVersion = seccion[2].trim();
 
 		// ResourcePath
@@ -73,7 +75,7 @@ public class HTTPRequest {
 			}
 		}
 		this.resourceName = resourceName;
-		
+
 		// Variables de control
 		String[] resourceChain = this.resourceChain.split("\\?");
 		int flag;
@@ -83,12 +85,12 @@ public class HTTPRequest {
 			flag = 1; // resourceParameters en primera linea
 
 		boolean emptyLine = false; // Bandera de informacion sobre linea vacia
-		
-		// Mapas para resourceParameters y heaerParameters
+
+		// Mapas para resourceParameters y headerParameters
 		Map<String, String> resourceParameters = new LinkedHashMap<>();
 		Map<String, String> headerParameters = new LinkedHashMap<>();
-		
-		//Busqueda de los resourceParameters en la primera linea
+
+		// Busqueda de los resourceParameters en la primera linea
 		if (flag == 1) {
 			String[] parameters = resourceChain[1].split("&");
 			for (int i = 0; i < parameters.length; i++) {
@@ -97,64 +99,49 @@ public class HTTPRequest {
 			}
 		}
 		this.resourceParameters = resourceParameters;
-		
+
 		/**
 		 * Resto de lineas
 		 */
-		//while ((linea = bf.readLine()) != null && !emptyLine) {
-		while(!emptyLine) {
-			
+		while (!emptyLine) {
+
 			linea = bf.readLine();
-			
+
 			String read = URLDecoder.decode(linea, "UTF-8"); // Conversión de la linea a UTF-8
-			
+
 			// Busqueda de headerParameters
 			if (!read.isEmpty() && !emptyLine) {
 				String[] aux = read.split(": ");
-				if(aux.length == 1) throw new HTTPParseException("Invalid header");
+				if (aux.length == 1)
+					throw new HTTPParseException("Invalid header");
 				headerParameters.put(aux[0], aux[1]);
 			}
-			
-//			// Busqueda de resourceParameters
-//			if (flag == 0 && emptyLine) {
-//				String[] param_1 = read.split("&");
-//				for (int i = 0; i < param_1.length; i++) {
-//					String[] param_2 = param_1[i].split("=");
-//					resourceParameters.put(param_2[0], param_2[1]);
-//					System.out.println(resourceParameters);
-//				}
-//			}
-			
-//			// Busqueda de content
-//			if (emptyLine) {
-//				this.content = read;
-//			}
-			
+
 			// Busqueda de contentLength
 			if (read.contains("Content-Length: ")) {
 				String[] aux = read.split(": ");
 				this.contentLength = Integer.parseInt(aux[1]);
 			}
-			
+
 			// Comprobacion de lectura de linea vacio (variable de control)
 			if (read.isEmpty())
 				emptyLine = true;
 
 		}
-		
+
 		// Asignacion de los mapas a sus atributos tras la lectura de todas las lineas
 		this.headerParameters = headerParameters;
 		this.resourceParameters = resourceParameters;
-		
+
 		// Busqueda de content
 		if (emptyLine && headerParameters.containsKey("Content-Length")) {
 			StringBuilder toret = new StringBuilder();
-			for(int i = 0; i < Integer.parseInt(headerParameters.get("Content-Length")); i++) {
-				toret.append((char)bf.read());
+			for (int i = 0; i < Integer.parseInt(headerParameters.get("Content-Length")); i++) {
+				toret.append((char) bf.read());
 			}
 			String contentReturns = URLDecoder.decode(toret.toString(), "UTF-8"); // Conversión de la linea a UTF-8
 			this.content = contentReturns;
-			if(flag == 0) {
+			if (flag == 0) {
 				String[] param_1 = contentReturns.split("&");
 				for (int i = 0; i < param_1.length; i++) {
 					String[] param_2 = param_1[i].split("=");
@@ -165,26 +152,21 @@ public class HTTPRequest {
 	}
 
 	public HTTPRequestMethod getMethod() {
-		//if(this.method == null) new HTTPParseException("Missing Method" + this.toString());
 		return this.method;
 	}
 
-	// "/hello/world.html?country=Spain&province=Ourense&city=Ourense"
 	public String getResourceChain() {
 		return this.resourceChain;
 	}
 
-	// "hello" "world.html"
 	public String[] getResourcePath() {
 		return this.resourcePath;
 	}
 
-	// "hello/world.html"
 	public String getResourceName() {
 		return this.resourceName;
 	}
 
-	// Map<String,String> {"message", "Hello world!!"}
 	public Map<String, String> getResourceParameters() {
 		return this.resourceParameters;
 	}

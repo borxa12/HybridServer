@@ -18,8 +18,6 @@ public class HybridServer {
 	private int numClients;
 	private int flag;
 
-	//private static final String WEB_PAGE = "Hybrid Server"; // "<html><body><h1>Hola Mundo!!</h1></body></html>";
-
 	public HybridServer() {
 		this.stop = false;
 		SERVICE_PORT = 8888;
@@ -52,20 +50,23 @@ public class HybridServer {
 				try (ServerSocket serverSocket = new ServerSocket(HybridServer.SERVICE_PORT)) {
 					ExecutorService pool = Executors.newFixedThreadPool(numClients);
 					while (true) {
-						if(flag == 0){
+						if (flag == 0) {
 							Socket socket = serverSocket.accept();
-							if(stop) break;
+							if (stop)
+								break;
 							pool.execute(new Worker(socket));
 						}
-						if (flag == 1){
+						if (flag == 1) {
 							Socket socket = serverSocket.accept();
-							if(stop) break;
-							pool.execute(new Worker(socket,pages));
+							if (stop)
+								break;
+							pool.execute(new Worker(socket, pages));
 						}
-						if (flag == 2){
+						if (flag == 2) {
 							Socket socket = serverSocket.accept();
-							if(stop) break;
-							pool.execute(new Worker(socket,properties));
+							if (stop)
+								break;
+							pool.execute(new Worker(socket, properties));
 						}
 					}
 				} catch (IOException e) {

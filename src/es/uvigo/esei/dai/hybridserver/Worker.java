@@ -23,35 +23,36 @@ public class Worker implements Runnable {
 	private Pages WEB_PAGES;
 	private String WEB;
 	private boolean flag;
+	private Connection connection;
+	private Controller controller;
 
 	public Worker(Socket socket) {
 		this.socket = socket;
 		this.WEB = "Hybrid Server";
-		flag = false;
+		this.flag = false;
 	}
 
 	public Worker(Socket socket, ServerPages pages) {
 		this.socket = socket;
 		this.WEB_PAGES = pages;
-		flag = true;
+		this.flag = true;
 	}
 
 	public Worker(Socket socket, Properties properties) {
 		this.socket = socket;
-		Connection connection = null;
+		this.connection = null;
+		this.WEB = "Hybrid Server";
 		try {
-			connection = DriverManager.getConnection(properties.getProperty("db.url"),
+			this.connection = DriverManager.getConnection(properties.getProperty("db.url"),
 					properties.getProperty("db.user"), properties.getProperty("db.password"));
-			this.WEB_PAGES = new PagesDBDAO(connection);
-			flag = true;
-			
+			//this.WEB_PAGES = new DBDAOhtml(connection);
+			this.controller = null;
+			this.flag = true;
+
 		} catch (SQLException e) {
 			e.printStackTrace();
-			this.WEB = "Hybrid Server";
-			flag = false;
 		}
-		
-		// PagesDBDAO dataBase = new PagesDBDAO(connection);
+
 	}
 
 	@Override
@@ -59,66 +60,73 @@ public class Worker implements Runnable {
 		try (Socket socket = this.socket) {
 
 			HTTPRequest request = new HTTPRequest(new InputStreamReader(socket.getInputStream()));
-			// Map<String, String> resourceParameters =
-			// request.getResourceParameters();
-			// String page = resourceParameters.get("uuid");
-
-			// Responder al cliente
 			HTTPResponse response = new HTTPResponse();
+			
 			response.setVersion("HTTP/1.1");
 			response.setStatus(HTTPResponseStatus.S200);
-			response.putParameter("Content-Type", "text/html");
 
-			if (flag) {
-				// POST
-				if (request.getMethod() == HTTPRequestMethod.POST) {
-					String uuid = UUID.randomUUID().toString();
+			if (this.flag) {
+				if (this.connection == null) {
+				//crea el response cuando no hay bd	
+					response.setStatus(HTTPResponseStatus.S200);
+					response.putParameter("Content-Type", "text/html");
+					response.setContent(WEB);
+					// POST
+					if (request.getMethod() == HTTPRequestMethod.POST) {
+						String uuid = UUID.randomUUID().toString();
 
-					if (request.getResourceParameters().get("html") == null)
-						response.setStatus(HTTPResponseStatus.S400);
-					this.WEB_PAGES.create(uuid,request);
-					
-					response.setContent(WEB_PAGES.link(uuid));
-				}
-
-				// DELETE
-				if (request.getMethod() == HTTPRequestMethod.DELETE) {
-					if (!WEB_PAGES.exists(request))
-						response.setStatus(HTTPResponseStatus.S404);
-					this.WEB_PAGES.remove(request);
-					
-				}
-
-				// GET
-				if (request.getMethod() == HTTPRequestMethod.GET) {
-					// Si ResourceName no contiene HTML: error 400
-					if (!request.getResourceName().contains("html"))
-						response.setStatus(HTTPResponseStatus.S400);
-					else { // Si no hay UUID
-						if (request.getResourceParameters().get("uuid") == null) {
-							// response.setContent("Hybrid Server");
-							response.setContent(this.WEB_PAGES.list());
-						} else { // Si hay UUID
+						if (request.getResourceParameters().get("html") == null)
+							response.setStatus(HTTPResponseStatus.S400);
+						this.WEB_PAGES.create(uuid,request);
 						
-							if (this.WEB_PAGES.exists(request)) {
-								
-								response.setContent(WEB_PAGES.get(request)); // UUIDexistente:visualiza página
-
-							} else {
-								if (!this.WEB_PAGES.exists(request))
-									response.setStatus(HTTPResponseStatus.S404); // UUID inexistente: error 404
-								else
-									response.setStatus(HTTPResponseStatus.S500);
-							}
-						}
+						response.setContent(WEB_PAGES.link(uuid));
 					}
 
+					// DELETE
+					if (request.getMethod() == HTTPRequestMethod.DELETE) {
+						if (!WEB_PAGES.exists(request))
+							response.setStatus(HTTPResponseStatus.S404);
+						this.WEB_PAGES.remove(request);
+						
+					}
+
+					// GET
+					if (request.getMethod() == HTTPRequestMethod.GET) {
+						// Si ResourceName no contiene HTML: error 400
+						if (!request.getResourceName().equals("/html"))
+							response.setStatus(HTTPResponseStatus.S400);
+						else { // Si no hay UUID
+							if (request.getResourceParameters().get("uuid") == null) {
+								// response.setContent("Hybrid Server");
+								response.setContent(this.WEB_PAGES.list());
+							} else { // Si hay UUID
+							
+								if (this.WEB_PAGES.exists(request)) {
+									
+									response.setContent(WEB_PAGES.get(request)); // UUIDexistente:visualiza página
+
+								} else {
+									if (!this.WEB_PAGES.exists(request))
+										response.setStatus(HTTPResponseStatus.S404); // UUID inexistente: error 404
+									else
+										response.setStatus(HTTPResponseStatus.S500);
+								}
+							}
+						}
+
+					}
+				}else{		
+				controller = new Controller(request, this.connection, this.WEB_PAGES);
+				response = this.controller.createResponse();
 				}
-			} else{
 				
+			} else {
+
 				response.setStatus(HTTPResponseStatus.S200);
 				response.setContent(WEB);
-				}
+			}
+			
+			
 
 			System.out.println("REQUEST: \r\n" + request + "\r\n");
 			System.out.println("RESPONSE: \r\n" + response + "\r\n");

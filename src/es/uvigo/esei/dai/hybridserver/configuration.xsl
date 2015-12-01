@@ -15,10 +15,4 @@
 			</body>
 		</html>
 	</xsl:template>
-	
-	<xsl:template match="c:connections">
-	
-	
-	
-	</xsl:template>
 </xsl:stylesheet>

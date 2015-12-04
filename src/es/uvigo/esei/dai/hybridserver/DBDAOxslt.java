@@ -112,20 +112,20 @@ public class DBDAOxslt implements Pages {
 		return false;
 	}
 	
-//	public boolean existsXSD(HTTPRequest request) {
-//		String query = "SELECT * FROM XSLT WHERE xsd=?";
-//		try (PreparedStatement statement = this.connection.prepareStatement(query)) {
-//			statement.setString(1, request.getResourceParameters().get("xsd"));
-//			try (ResultSet results = statement.executeQuery()) {
-//				if (results.next())
-//					return true;
-//				else
-//					return false;
-//			}
-//		} catch (SQLException e) {
-//			throw new RuntimeException(e);
-//		}
-//	}
+	public boolean existsXSD(HTTPRequest request) {
+		String query = "SELECT * FROM XSLT WHERE xsd=?";
+		try (PreparedStatement statement = this.connection.prepareStatement(query)) {
+			statement.setString(1, request.getResourceParameters().get("xsd"));
+			try (ResultSet results = statement.executeQuery()) {
+				if (results.next())
+					return true;
+				else
+					return false;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
 
 }
 

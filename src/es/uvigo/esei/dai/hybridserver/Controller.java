@@ -130,7 +130,7 @@ public class Controller {
 		this.WEB_PAGES.remove(this.request);
 	}
 
-	public void get(String type){
+	public void get(String type) {
 		// Si ResourceName no contiene HTML: error 400
 		if (!this.request.getResourceName().contains(type))
 			this.response.setStatus(HTTPResponseStatus.S400);
@@ -140,16 +140,21 @@ public class Controller {
 			} else { // Si hay UUID
 
 				if (this.WEB_PAGES.exists(this.request)) {
-
-					this.response.setContent(this.WEB_PAGES.get(this.request)); // UUIDexistente:visualiza página
-
+					if (type == "xml" && this.request.getResourceParameters().get("xslt") != null) { // XML con uuid && parámetro xslt
+						String xmlid = this.request.getResourceParameters().get("uuid");
+						String xsltid = this.request.getResourceParameters().get("xslt");
+					} else {
+						this.response.setContent(this.WEB_PAGES.get(this.request)); // UUIDexistente:visualiza página
+					}
 				} else {
 					if (!this.WEB_PAGES.exists(this.request))
 						this.response.setStatus(HTTPResponseStatus.S404); // UUID inexistente: error 404
 					else
 						this.response.setStatus(HTTPResponseStatus.S500);
 				}
+
 			}
 		}
+
 	}
 }

@@ -54,6 +54,23 @@ public class Worker implements Runnable {
 		}
 
 	}
+	
+	public Worker(Socket socket, Configuration config) {
+		this.socket = socket;
+		this.connection = null;
+		this.WEB = "Hybrid Server";
+		try {
+			this.connection = DriverManager.getConnection(config.getDbURL(),
+					config.getDbUser(), config.getDbPassword());
+			//this.WEB_PAGES = new DBDAOhtml(connection);
+			this.controller = null;
+			this.flag = true;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+	}
 
 	@Override
 	public void run() {

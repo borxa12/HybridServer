@@ -110,7 +110,7 @@ public class Worker implements Runnable {
 					// GET
 					if (request.getMethod() == HTTPRequestMethod.GET) {
 						// Si ResourceName no contiene HTML: error 400
-						if (!request.getResourceName().equals("/html"))
+						if (!request.getResourceName().startsWith("html"))
 							response.setStatus(HTTPResponseStatus.S400);
 						else { // Si no hay UUID
 							if (request.getResourceParameters().get("uuid") == null) {

@@ -20,8 +20,9 @@ public class Launcher {
 				if (args[0].toLowerCase().endsWith(".xml")) {
 					File reader = new File(args[0]);
 					Configuration config = new Configuration();
+					XMLConfigurationLoader loader = new XMLConfigurationLoader();
 					try {
-						config =  XMLConfigurationLoader.load(reader);
+						config =  loader.load(reader);
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

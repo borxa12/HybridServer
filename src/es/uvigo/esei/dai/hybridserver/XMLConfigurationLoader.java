@@ -19,6 +19,7 @@ package es.uvigo.esei.dai.hybridserver;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +27,11 @@ import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
@@ -58,7 +64,7 @@ public class XMLConfigurationLoader {
 		return builder.parse(new File(documentPath));
 	}
 	
-	public static Configuration load(File xmlFile)
+	public Configuration load(File xmlFile)
 	throws  Exception {
 		try {
 			Configuration config = new Configuration();
@@ -104,5 +110,13 @@ public class XMLConfigurationLoader {
 
 			throw new Exception();
 		}
+	}
+	
+	public static String transformWithXSLT(File xml, File xslt) throws TransformerException{
+		TransformerFactory tFactory = TransformerFactory.newInstance();
+		Transformer transformer = tFactory.newTransformer(new StreamSource(xslt));
+		StringWriter writer = new StringWriter();
+		transformer.transform(new StreamSource(xml), new StreamResult(writer));
+		return writer.toString();
 	}
 }

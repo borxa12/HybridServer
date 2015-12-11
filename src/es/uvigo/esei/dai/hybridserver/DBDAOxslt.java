@@ -42,19 +42,19 @@ public class DBDAOxslt implements Pages {
 
 	@Override
 	public String get(HTTPRequest request) {
-		String content = null;
 		String query = "SELECT content FROM XSLT WHERE uuid=?";
 		try (PreparedStatement statement = this.connection.prepareStatement(query)) {
 			statement.setString(1, request.getResourceParameters().get("uuid"));
 			try (ResultSet results = statement.executeQuery()) {
 				if (results.next()) {
-					content = results.getString("content");
+					return results.toString();
+				} else{
+					return null;
 				}
 			}
 		} catch (SQLException e) {
 			throw new RuntimeException(e);
 		}
-		return content;
 	}
 
 	@Override
@@ -113,7 +113,15 @@ public class DBDAOxslt implements Pages {
 	}
 	
 	public String recuperarXSD(String uuid) {
+<<<<<<< HEAD
 		String query = "SELECT xsd FROM XSLT WHERE uuid=?";
+=======
+<<<<<<< HEAD
+		String query = "SELECT xsd FROM XSLT WHERE uuid=?";
+=======
+		String query = "SELECT xsd FROM XSLT WHERE xslt=?";
+>>>>>>> origin/master
+>>>>>>> origin/master
 		String xsd = null;
 		try (PreparedStatement statement = this.connection.prepareStatement(query)) {
 			statement.setString(1, uuid);
@@ -126,6 +134,10 @@ public class DBDAOxslt implements Pages {
 		}
 		return xsd;
 	}
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/master
 	public boolean existsUUID(String uuid) {
 		String query = "SELECT * FROM XSLT WHERE uuid=?";
 		try (PreparedStatement statement = this.connection.prepareStatement(query)) {
@@ -156,6 +168,11 @@ public class DBDAOxslt implements Pages {
 		}
 		return content;
 	}
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> origin/master
+>>>>>>> origin/master
 
 }
 

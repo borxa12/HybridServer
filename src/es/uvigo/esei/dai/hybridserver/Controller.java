@@ -1,5 +1,6 @@
 package es.uvigo.esei.dai.hybridserver;
 
+<<<<<<< HEAD
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -23,6 +24,16 @@ import javax.xml.validation.SchemaFactory;
 
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
+=======
+import java.io.File;
+import java.io.IOException;
+import java.sql.Connection;
+import java.util.UUID;
+
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+
+>>>>>>> origin/master
 import org.xml.sax.SAXException;
 
 import es.uvigo.esei.dai.hybridserver.http.HTTPRequest;
@@ -151,9 +162,9 @@ public class Controller {
 		this.WEB_PAGES.remove(this.request);
 	}
 
-	public void get(String type){
+	public void get(String type) {
 		// Si ResourceName no contiene HTML: error 400
-		if (!this.request.getResourceName().contains(type))
+		if (!this.request.getResourceName().startsWith(type))
 			this.response.setStatus(HTTPResponseStatus.S400);
 		else { // Si no hay UUID
 			if (this.request.getResourceParameters().get("uuid") == null) {
@@ -161,10 +172,46 @@ public class Controller {
 			} else { // Si hay UUID
 
 				if (this.WEB_PAGES.exists(this.request)) {
+<<<<<<< HEAD
 					if (type.equals("xml") && this.request.getResourceParameters().get("xslt") != null){
 						transform(request);
 					} else{
 					this.response.setContent(this.WEB_PAGES.get(this.request)); // UUIDexistente:visualiza página
+=======
+					if(type == "xml"){
+						if (this.request.getResourceParameters().get("xslt") != null) { // XML con uuid && parámetro xslt
+							String xmlid = this.request.getResourceParameters().get("uuid");
+							String xsltid = this.request.getResourceParameters().get("xslt");
+							DBDAOxslt dbdao = new DBDAOxslt(connection);
+							String xsd = dbdao.recuperarXSD(xsltid);
+							if(xsd != null){
+								try{
+									if(XMLConfigurationLoader.loadAndValidateWithExternalXSD(xmlid, xsd) != null){
+										try{
+											this.response.setContent(XMLConfigurationLoader.transformWithXSLT(new File(xmlid), new File(xsltid)));
+										} catch (TransformerException e){
+											System.err.println("ERROR en la transformación (XML conXSLT): "+e.getMessage());
+										}
+										response.removeParameter("Content-Type");
+										response.putParameter("Content-Type", "text/html");
+										this.response.setContent(this.WEB_PAGES.get(request));
+									} else {
+										this.response.setStatus(HTTPResponseStatus.S400);
+									}
+								} catch(ParserConfigurationException | SAXException | IOException e){
+									e.printStackTrace();
+								}
+							}else{
+								this.response.setStatus(HTTPResponseStatus.S400);
+							}
+						} else {
+							
+							this.response.setStatus(HTTPResponseStatus.S404);
+						}
+					} else {
+						
+						this.response.setContent(this.WEB_PAGES.get(request));// UUIDexistente:visualiza página
+>>>>>>> origin/master
 					}
 				} else {
 					if (!this.WEB_PAGES.exists(this.request))
@@ -172,8 +219,10 @@ public class Controller {
 					else
 						this.response.setStatus(HTTPResponseStatus.S500);
 				}
+
 			}
 		}
+
 	}
 	
 	public void transform(HTTPRequest request){

@@ -94,5 +94,19 @@ public class DBDAOxml implements Pages {
 			throw new RuntimeException(e);
 		}
 	}
-
+	public String getContent(String uuid) {
+		String content = null;
+		String query = "SELECT content FROM XML WHERE uuid=?";
+		try (PreparedStatement statement = this.connection.prepareStatement(query)) {
+			statement.setString(1, uuid);
+			try (ResultSet results = statement.executeQuery()) {
+				if (results.next()) {
+					content = results.getString("content");
+				}
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return content;
+	}
 }

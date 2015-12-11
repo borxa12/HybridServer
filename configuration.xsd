@@ -7,7 +7,7 @@
 		<sequence>
 			<element name="http" type="integer" />
 			<element name="webservice" type="string" />
-			<element name="numClientes" type="integer" />
+			<element name="numClients" type="integer" />
 		</sequence>
 	</complexType>
 
@@ -29,7 +29,7 @@
 
 	<complexType name="servers">
 		<sequence>
-			<element name="servers" type="tns:server" maxOccurs="unbounded" />
+			<element name="server" type="tns:server" maxOccurs="unbounded" />
 		</sequence>
 	</complexType>
 

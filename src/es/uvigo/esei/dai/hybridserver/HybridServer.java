@@ -17,6 +17,7 @@ public class HybridServer {
 	private Properties properties;
 	private int numClients;
 	private int flag;
+	private Configuration config;
 
 	public HybridServer() {
 		this.stop = false;
@@ -37,6 +38,14 @@ public class HybridServer {
 		SERVICE_PORT = Integer.parseInt(properties.getProperty("port"));
 		this.numClients = Integer.parseInt(properties.getProperty("numClients"));
 		this.flag = 2;
+	}
+	
+	public HybridServer(Configuration config){
+		this.config = config;
+		SERVICE_PORT = config.getHttpPort();
+		this.numClients = config.getNumClients();
+		this.flag = 3;
+		
 	}
 
 	public int getPort() {
@@ -67,6 +76,12 @@ public class HybridServer {
 							if (stop)
 								break;
 							pool.execute(new Worker(socket, properties));
+						}
+						if (flag == 3) {
+							Socket socket = serverSocket.accept();
+							if (stop)
+								break;
+							pool.execute(new Worker(socket, config));
 						}
 					}
 				} catch (IOException e) {

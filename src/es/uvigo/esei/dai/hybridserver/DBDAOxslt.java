@@ -112,20 +112,50 @@ public class DBDAOxslt implements Pages {
 		return false;
 	}
 	
-//	public boolean existsXSD(HTTPRequest request) {
-//		String query = "SELECT * FROM XSLT WHERE xsd=?";
-//		try (PreparedStatement statement = this.connection.prepareStatement(query)) {
-//			statement.setString(1, request.getResourceParameters().get("xsd"));
-//			try (ResultSet results = statement.executeQuery()) {
-//				if (results.next())
-//					return true;
-//				else
-//					return false;
-//			}
-//		} catch (SQLException e) {
-//			throw new RuntimeException(e);
-//		}
-//	}
+	public String recuperarXSD(String uuid) {
+		String query = "SELECT xsd FROM XSLT WHERE uuid=?";
+		String xsd = null;
+		try (PreparedStatement statement = this.connection.prepareStatement(query)) {
+			statement.setString(1, uuid);
+			try (ResultSet results = statement.executeQuery()) {
+				if (results.next())
+					xsd = results.getString("xsd");
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return xsd;
+	}
+	public boolean existsUUID(String uuid) {
+		String query = "SELECT * FROM XSLT WHERE uuid=?";
+		try (PreparedStatement statement = this.connection.prepareStatement(query)) {
+			statement.setString(1,uuid);
+			try (ResultSet results = statement.executeQuery()) {
+				if (results.next())
+					return true;
+				else
+					return false;
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	public String getContent(String uuid) {
+		String content = null;
+		String query = "SELECT content FROM XSLT WHERE uuid=?";
+		try (PreparedStatement statement = this.connection.prepareStatement(query)) {
+			statement.setString(1, uuid);
+			try (ResultSet results = statement.executeQuery()) {
+				if (results.next()) {
+					content = results.getString("content");
+				}
+			}
+		} catch (SQLException e) {
+			throw new RuntimeException(e);
+		}
+		return content;
+	}
 
 }
 

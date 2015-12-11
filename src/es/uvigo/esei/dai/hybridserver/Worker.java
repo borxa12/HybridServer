@@ -54,6 +54,23 @@ public class Worker implements Runnable {
 		}
 
 	}
+	
+	public Worker(Socket socket, Configuration config) {
+		this.socket = socket;
+		this.connection = null;
+		this.WEB = "Hybrid Server";
+		try {
+			this.connection = DriverManager.getConnection(config.getDbURL(),
+					config.getDbUser(), config.getDbPassword());
+			//this.WEB_PAGES = new DBDAOhtml(connection);
+			this.controller = null;
+			this.flag = true;
+
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+
+	}
 
 	@Override
 	public void run() {
@@ -93,7 +110,7 @@ public class Worker implements Runnable {
 					// GET
 					if (request.getMethod() == HTTPRequestMethod.GET) {
 						// Si ResourceName no contiene HTML: error 400
-						if (!request.getResourceName().equals("/html"))
+						if (!request.getResourceName().startsWith("html"))
 							response.setStatus(HTTPResponseStatus.S400);
 						else { // Si no hay UUID
 							if (request.getResourceParameters().get("uuid") == null) {

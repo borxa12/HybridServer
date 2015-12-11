@@ -76,7 +76,6 @@ extends JdbcTestCase {
 			  readToString(getClass().getResourceAsStream("sample2.html")) 
 			},
 		};
-		
 		this.server.start();
 	}
 

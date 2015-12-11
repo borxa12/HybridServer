@@ -175,11 +175,11 @@ public abstract class MultipleServersTestCase {
 	}
 	
 	protected String getUsername() {
-		return "dai";
+		return "hsdb";
 	}
 	
 	protected String getPassword() {
-		return "daipassword";
+		return "hsdbpass";
 	}
 	
 	protected String getDriverClass() {

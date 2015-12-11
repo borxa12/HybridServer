@@ -1,5 +1,6 @@
 package es.uvigo.esei.dai.hybridserver;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -14,11 +15,25 @@ public class Launcher {
 
 		try {
 			if (args.length == 1) {
-				FileReader reader = new FileReader(args[0]);
-				Properties properties = new Properties();
-				properties.load(reader);
-				HybridServer hybridServer = new HybridServer(properties);
-				hybridServer.start();
+				
+				
+				if (args[0].toLowerCase().endsWith(".xml")) {
+					File reader = new File(args[0]);
+					Configuration config = new Configuration();
+					XMLConfigurationLoader loader = new XMLConfigurationLoader();
+					try {
+						config =  loader.load(reader);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}else {
+					FileReader reader = new FileReader(args[0]);
+					Properties properties = new Properties();
+					properties.load(reader);
+					HybridServer hybridServer = new HybridServer(properties);
+					hybridServer.start();
+				}
 			} else {
 				if (args.length == 0) {
 					if (!param) {

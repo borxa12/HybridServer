@@ -39,14 +39,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-<<<<<<< HEAD
 
-=======
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/master
->>>>>>> origin/master
 
 public class XMLConfigurationLoader {
 	
@@ -68,14 +61,7 @@ public class XMLConfigurationLoader {
 		
 		// Se aÃ±ade el manejador de errores
 		DocumentBuilder builder = factory.newDocumentBuilder();
-<<<<<<< HEAD
 		builder.setErrorHandler(new SimpleErrorHandler());
-=======
-<<<<<<< HEAD
-		builder.setErrorHandler(new SimpleErrorHandler());
-=======
->>>>>>> origin/master
->>>>>>> origin/master
 		
 		return builder.parse(new File(documentPath));
 	}
@@ -126,20 +112,6 @@ public class XMLConfigurationLoader {
 
 			throw new Exception();
 		}
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
-=======
-	}
-	
-	public static String transformWithXSLT(File xml, File xslt) throws TransformerException{
-		TransformerFactory tFactory = TransformerFactory.newInstance();
-		Transformer transformer = tFactory.newTransformer(new StreamSource(xslt));
-		StringWriter writer = new StringWriter();
-		transformer.transform(new StreamSource(xml), new StreamResult(writer));
-		return writer.toString();
->>>>>>> origin/master
->>>>>>> origin/master
 	}
 	
 	public static String transformWithXSLT(File xml, File xslt) throws TransformerException{

@@ -8,9 +8,11 @@ import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.xml.ws.Endpoint;
+
 public class HybridServer {
 
-	private static int SERVICE_PORT;
+	private int servicePort;
 	private Thread serverThread;
 	private boolean stop;
 	private ServerPages pages;
@@ -18,45 +20,48 @@ public class HybridServer {
 	private int numClients;
 	private int flag;
 	private Configuration config;
+	private Endpoint ep;
 
 	public HybridServer() {
 		this.stop = false;
-		SERVICE_PORT = 8888;
+		servicePort = 8888;
 		this.numClients = 50;
 		this.flag = 0;
 	}
 
 	public HybridServer(Map<String, String> pages) {
 		this.pages = new ServerPages(pages);
-		SERVICE_PORT = 8888;
+		servicePort = 8888;
 		this.numClients = 50;
 		this.flag = 1;
 	}
 
 	public HybridServer(Properties properties) {
 		this.properties = properties;
-		SERVICE_PORT = Integer.parseInt(properties.getProperty("port"));
+		servicePort = Integer.parseInt(properties.getProperty("port"));
 		this.numClients = Integer.parseInt(properties.getProperty("numClients"));
 		this.flag = 2;
 	}
 	
 	public HybridServer(Configuration config){
 		this.config = config;
-		SERVICE_PORT = config.getHttpPort();
+		servicePort = config.getHttpPort();
 		this.numClients = config.getNumClients();
 		this.flag = 3;
-		
+		this.ep = null;
 	}
 
 	public int getPort() {
-		return SERVICE_PORT;
+		return servicePort;
 	}
 
 	public void start() {
+		if(this.flag == 3 && config.getWebServiceURL() != null)
+			this.ep = Endpoint.publish(config.getWebServiceURL(),new HSImp(config));
 		this.serverThread = new Thread() {
 			@Override
 			public void run() {
-				try (ServerSocket serverSocket = new ServerSocket(HybridServer.SERVICE_PORT)) {
+				try (ServerSocket serverSocket = new ServerSocket(servicePort)) {
 					ExecutorService pool = Executors.newFixedThreadPool(numClients);
 					while (true) {
 						if (flag == 0) {
@@ -97,7 +102,7 @@ public class HybridServer {
 	public void stop() {
 		this.stop = true;
 
-		try (Socket socket = new Socket("localhost", SERVICE_PORT)) {
+		try (Socket socket = new Socket("localhost", servicePort)) {
 			// Esta conexión se hace, simplemente, para "despertar" el hilo servidor
 		} catch (IOException e) {
 			throw new RuntimeException(e);
@@ -110,6 +115,9 @@ public class HybridServer {
 		}
 
 		this.serverThread = null;
+		
+		if(this.flag == 3 && config.getWebServiceURL() != null)
+			this.ep.stop();
 	}
 
 }

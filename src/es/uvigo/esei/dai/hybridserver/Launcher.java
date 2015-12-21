@@ -15,19 +15,19 @@ public class Launcher {
 
 		try {
 			if (args.length == 1) {
-				
-				
 				if (args[0].toLowerCase().endsWith(".xml")) {
 					File reader = new File(args[0]);
 					Configuration config = new Configuration();
 					XMLConfigurationLoader loader = new XMLConfigurationLoader();
 					try {
-						config =  loader.load(reader);
+						config = loader.load(reader);
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				}else {
+					HybridServer hybridServer = new HybridServer(config);
+					hybridServer.start();
+				} else {
 					FileReader reader = new FileReader(args[0]);
 					Properties properties = new Properties();
 					properties.load(reader);

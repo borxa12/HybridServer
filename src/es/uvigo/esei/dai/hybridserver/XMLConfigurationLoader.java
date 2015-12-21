@@ -66,11 +66,10 @@ public class XMLConfigurationLoader {
 		return builder.parse(new File(documentPath));
 	}
 	
-	public Configuration load(File xmlFile)
-	throws  Exception {
+	public Configuration load(File xmlFile) throws  Exception {
 		try {
 			Configuration config = new Configuration();
-			String xmlPath = xmlFile.getName();
+			String xmlPath = xmlFile.getAbsolutePath();
 			Document document = loadAndValidateWithExternalXSD(xmlPath, XSD_PATH);
 			
 			int httpPort = Integer.parseInt(document.getElementsByTagName("http").item(0).getTextContent().trim());
@@ -85,8 +84,7 @@ public class XMLConfigurationLoader {
 
 			NodeList serverslist = document.getElementsByTagName("server");
 		
-			for(int i=0; i< serverslist.getLength(); i++){
-				
+			for(int i=0; i < serverslist.getLength(); i++){
 				ServerConfiguration server = new ServerConfiguration();
 				Element node = (Element) serverslist.item(i);
 				
@@ -106,10 +104,10 @@ public class XMLConfigurationLoader {
 			config.setDbPassword(dbPassword);
 			config.setDbURL(dbURL);
 			config.setServers(servers);
+			
 			return config;		
 			
 		} catch (Exception e) {
-
 			throw new Exception();
 		}
 	}
@@ -122,6 +120,4 @@ public class XMLConfigurationLoader {
 		return writer.toString();
 	}
 	
-	 
-
 }

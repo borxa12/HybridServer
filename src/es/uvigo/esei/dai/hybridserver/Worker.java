@@ -25,6 +25,7 @@ public class Worker implements Runnable {
 	private boolean flag;
 	private Connection connection;
 	private Controller controller;
+	private Configuration config;
 
 	public Worker(Socket socket) {
 		this.socket = socket;
@@ -59,6 +60,7 @@ public class Worker implements Runnable {
 		this.socket = socket;
 		this.connection = null;
 		this.WEB = "Hybrid Server";
+		this.config = config;
 		try {
 			this.connection = DriverManager.getConnection(config.getDbURL(),
 					config.getDbUser(), config.getDbPassword());
@@ -69,7 +71,6 @@ public class Worker implements Runnable {
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
-
 	}
 
 	@Override
@@ -114,14 +115,10 @@ public class Worker implements Runnable {
 							response.setStatus(HTTPResponseStatus.S400);
 						else { // Si no hay UUID
 							if (request.getResourceParameters().get("uuid") == null) {
-								// response.setContent("Hybrid Server");
 								response.setContent(this.WEB_PAGES.list());
 							} else { // Si hay UUID
-							
 								if (this.WEB_PAGES.exists(request)) {
-									
 									response.setContent(WEB_PAGES.get(request)); // UUIDexistente:visualiza página
-
 								} else {
 									if (!this.WEB_PAGES.exists(request))
 										response.setStatus(HTTPResponseStatus.S404); // UUID inexistente: error 404
@@ -132,19 +129,15 @@ public class Worker implements Runnable {
 						}
 
 					}
-				}else{		
-				controller = new Controller(request, this.connection, this.WEB_PAGES);
-				response = this.controller.createResponse();
+				} else {
+					controller = new Controller(request, this.connection, this.WEB_PAGES, this.config);
+					response = this.controller.createResponse();
 				}
-				
 			} else {
-
 				response.setStatus(HTTPResponseStatus.S200);
 				response.setContent(WEB);
 			}
 			
-			
-
 			System.out.println("REQUEST: \r\n" + request + "\r\n");
 			System.out.println("RESPONSE: \r\n" + response + "\r\n");
 

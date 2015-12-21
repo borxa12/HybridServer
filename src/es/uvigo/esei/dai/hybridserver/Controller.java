@@ -5,10 +5,15 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.sql.Connection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import javax.xml.XMLConstants;
+import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -20,6 +25,8 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
+import javax.xml.ws.Service;
+import javax.xml.ws.WebServiceException;
 
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
@@ -36,12 +43,14 @@ public class Controller {
 	private Pages WEB_PAGES;
 	private Connection connection;
 	private HTTPResponse response;
+	private Configuration config;
 	
-	public Controller(HTTPRequest request, Connection connection, Pages pages) {
+	public Controller(HTTPRequest request, Connection connection, Pages pages, Configuration config) {
 		this.request = request;
 		this.WEB_PAGES = pages;
 		this.connection = connection;
 		this.response = new HTTPResponse();
+		this.config = config;
 	}
 	
 	public HTTPResponse createResponse(){
@@ -50,102 +59,99 @@ public class Controller {
 		this.response.setStatus(HTTPResponseStatus.S200);
 		String type = request.getResourcePath()[0];
 		switch (type) {
-
-		case "html":
-			this.WEB_PAGES = new DBDAOhtml(connection);
-			this.response.putParameter("Content-Type", "text/html");
-			if (this.request.getMethod() == HTTPRequestMethod.POST) {
-				post(type);
-			}
-			if (this.request.getMethod() == HTTPRequestMethod.DELETE) {
-				delete(type);
-			}
-			if (this.request.getMethod() == HTTPRequestMethod.GET) {
-				get(type);
-			}
-			break;
-		case "xml":
-			this.WEB_PAGES = new DBDAOxml(connection);
-			this.response.putParameter("Content-Type", "application/xml");
-			if (this.request.getMethod() == HTTPRequestMethod.POST) {
-				post(type);
-			}
-			if (this.request.getMethod() == HTTPRequestMethod.DELETE) {
-				delete(type);
-			}
-			if (this.request.getMethod() == HTTPRequestMethod.GET) {
-				get(type);
-			}
-			break;
-		case "xsd":
-			this.WEB_PAGES = new DBDAOxsd(connection);
-			response.putParameter("Content-Type", "application/xml");
-			if (this.request.getMethod() == HTTPRequestMethod.POST) {
-				post(type);
-			}
-			if (this.request.getMethod() == HTTPRequestMethod.DELETE) {
-				delete(type);
-			}
-			if (this.request.getMethod() == HTTPRequestMethod.GET) {
-				get(type);
-			}
-			break;
-		case "xslt":
-			this.WEB_PAGES = new DBDAOxslt(connection);	
-			response.putParameter("Content-Type", "application/xml");
-			if (this.request.getMethod() == HTTPRequestMethod.POST) {
-				post(type);
-			}
-			if (this.request.getMethod() == HTTPRequestMethod.DELETE) {
-				delete(type);
-			}
-			if (this.request.getMethod() == HTTPRequestMethod.GET) {
-				get(type);
-			}
-			break;
+			case "html":
+				this.WEB_PAGES = new DBDAOhtml(connection);
+				this.response.putParameter("Content-Type", "text/html");
+				if (this.request.getMethod() == HTTPRequestMethod.POST) {
+					post(type);
+				}
+				if (this.request.getMethod() == HTTPRequestMethod.DELETE) {
+					delete(type);
+				}
+				if (this.request.getMethod() == HTTPRequestMethod.GET) {
+					get(type);
+				}
+				break;
+				
+			case "xml":
+				this.WEB_PAGES = new DBDAOxml(connection);
+				this.response.putParameter("Content-Type", "application/xml");
+				if (this.request.getMethod() == HTTPRequestMethod.POST) {
+					post(type);
+				}
+				if (this.request.getMethod() == HTTPRequestMethod.DELETE) {
+					delete(type);
+				}
+				if (this.request.getMethod() == HTTPRequestMethod.GET) {
+					get(type);
+				}
+				break;
+				
+			case "xsd":
+				this.WEB_PAGES = new DBDAOxsd(connection);
+				response.putParameter("Content-Type", "application/xml");
+				if (this.request.getMethod() == HTTPRequestMethod.POST) {
+					post(type);
+				}
+				if (this.request.getMethod() == HTTPRequestMethod.DELETE) {
+					delete(type);
+				}
+				if (this.request.getMethod() == HTTPRequestMethod.GET) {
+					get(type);
+				}
+				break;
+				
+			case "xslt":
+				this.WEB_PAGES = new DBDAOxslt(connection);	
+				response.putParameter("Content-Type", "application/xml");
+				if (this.request.getMethod() == HTTPRequestMethod.POST) {
+					post(type);
+				}
+				if (this.request.getMethod() == HTTPRequestMethod.DELETE) {
+					delete(type);
+				}
+				if (this.request.getMethod() == HTTPRequestMethod.GET) {
+					get(type);
+				}
+				break;
+			
 			default:
 				this.response.setStatus(HTTPResponseStatus.S400);
 				break;
-
-		}
 	
-		return this.response;
-		
-				
+		}
+		return this.response;		
 	}
 
 	public void post(String type){
-
-			String uuid = UUID.randomUUID().toString();
-			switch (type) {
-			case "xslt":
-				if(this.request.getContent() == null || this.request.getResourceParameters().get("xsd") == null) {
-					this.response.setStatus(HTTPResponseStatus.S400);
+		String uuid = UUID.randomUUID().toString();
+		switch (type) {
+		case "xslt":
+			if(this.request.getContent() == null || this.request.getResourceParameters().get("xsd") == null) {
+				this.response.setStatus(HTTPResponseStatus.S400);
+			} else {
+				if(this.request.getResourceParameters().get("xsd") != null &&
+						!this.WEB_PAGES.exists(this.request)) {
+					this.response.setStatus(HTTPResponseStatus.S404);
 				} else {
-					if(this.request.getResourceParameters().get("xsd") != null &&
-							!this.WEB_PAGES.exists(this.request)) {
-						this.response.setStatus(HTTPResponseStatus.S404);
-					} else {
-						this.WEB_PAGES.create(uuid, this.request);
-						this.response.setContent(this.WEB_PAGES.link(uuid));
-					}
-				}
-				break;
-
-			default:
-				if (this.request.getResourceParameters().get(type) == null )
-					this.response.setStatus(HTTPResponseStatus.S400);
-				else
 					this.WEB_PAGES.create(uuid, this.request);
-
-				this.response.setContent(this.WEB_PAGES.link(uuid));
-				break;
+					this.response.setContent(this.WEB_PAGES.link(uuid));
+				}
 			}
-			
-		}
+			break;
+
+		default:
+			if (this.request.getResourceParameters().get(type) == null )
+				this.response.setStatus(HTTPResponseStatus.S400);
+			else
+				this.WEB_PAGES.create(uuid, this.request);
+
+			this.response.setContent(this.WEB_PAGES.link(uuid));
+			break;
+		}		
+	}
 		
 	public void delete(String type){
-
 		if (!this.WEB_PAGES.exists(this.request))
 			this.response.setStatus(HTTPResponseStatus.S404);
 		this.WEB_PAGES.remove(this.request);
@@ -157,9 +163,23 @@ public class Controller {
 			this.response.setStatus(HTTPResponseStatus.S400);
 		else { // Si no hay UUID
 			if (this.request.getResourceParameters().get("uuid") == null) {
-				this.response.setContent(this.WEB_PAGES.list());
+				StringBuilder uuids = new StringBuilder();
+				uuids.append("<h1>Local Server</h1>");
+				uuids.append(this.WEB_PAGES.list());
+				List<HSService> remoteServices = connectService(config);
+				if(!remoteServices.isEmpty()) {
+					for (HSService hsService : remoteServices) {
+						String contenido = hsService.getUUID(type);
+						if(!contenido.isEmpty()) {
+							uuids.append("<h1>" /* + Nombre Server */ + "</h1>");
+							uuids.append(contenido);
+						}
+					}
+					this.response.setContent(uuids.toString());
+				} else {
+					this.response.setContent(this.WEB_PAGES.list());
+				}
 			} else { // Si hay UUID
-
 				if (this.WEB_PAGES.exists(this.request)) {
 					if (type.equals("xml") && this.request.getResourceParameters().get("xslt") != null){
 						transform(request);
@@ -167,10 +187,23 @@ public class Controller {
 					this.response.setContent(this.WEB_PAGES.get(this.request)); // UUIDexistente:visualiza página
 					}
 				} else {
-					if (!this.WEB_PAGES.exists(this.request))
-						this.response.setStatus(HTTPResponseStatus.S404); // UUID inexistente: error 404
-					else
-						this.response.setStatus(HTTPResponseStatus.S500);
+					if (!this.WEB_PAGES.exists(this.request)) {
+						List<HSService> remoteServices = connectService(config);
+						if(!remoteServices.isEmpty()) {
+							String contenido = null;
+							for (HSService hsService : remoteServices) {
+								contenido = hsService.getContent(this.request.getResourceParameters().get("uuid"),type);
+								if(contenido != null) break;
+							}
+							if(contenido != null) {
+								this.response.setContent(contenido);
+							} else {
+								this.response.setStatus(HTTPResponseStatus.S404); // UUID inexistente: error 404
+							}
+						} else {
+							this.response.setStatus(HTTPResponseStatus.S404); // UUID inexistente: error 404
+						}
+					} else this.response.setStatus(HTTPResponseStatus.S500);
 				}
 			}
 		}
@@ -230,7 +263,7 @@ public class Controller {
 		return builder.parse(xmlSource);
 	}
 	
-	public String transformWithXSLT(String xml, String xslt) throws TransformerException{
+	public String transformWithXSLT(String xml, String xslt) throws TransformerException {
 		
 		DBDAOxml dbdaoxml = new DBDAOxml(connection);
 		DBDAOxslt dbdaoxslt = new DBDAOxslt(connection);
@@ -246,4 +279,27 @@ public class Controller {
 		transformer.transform(new StreamSource(xmlReader), new StreamResult(writer));
 		return writer.toString();
 	}
+	
+	public List<HSService> connectService(Configuration config) {
+		List<HSService> remoteServices = new ArrayList<>();
+		if(config != null) {
+			List<ServerConfiguration> servers = config.getServers();
+			for(int i = 0; i < servers.size(); i++) {
+				//Service service = null;
+				try {
+					Service service = Service.create(new URL(servers.get(i).getWsdl()),
+							new QName(servers.get(i).getNamespace(),servers.get(i).getService()));
+					remoteServices.add(service.getPort(HSService.class));
+				} catch (MalformedURLException malURLe) {
+					System.err.println("URL mal formada: " + malURLe.getMessage());
+				} catch (WebServiceException webSe) {
+					System.err.println("Error WebService: " + webSe.getMessage());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		return remoteServices;
+	}
+	
 }

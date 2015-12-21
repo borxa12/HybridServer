@@ -1,4 +1,4 @@
-CREATE USER hsdb IDENTIFIED BY PASSWORD 'hsdbpass';
+CREATE USER hsdb IDENTIFIED BY 'hsdbpass';
 
 CREATE DATABASE hstestdb;
 

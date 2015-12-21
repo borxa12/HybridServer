@@ -54,6 +54,8 @@
 		<available classname="es.uvigo.esei.dai.hybridserver.http.HTTPResponseStatus" property="exists.response.status" classpathref="project.classpath"/>
 		<available classname="es.uvigo.esei.dai.hybridserver.Configuration" property="exists.configuration" classpathref="project.classpath"/>
 		<available classname="es.uvigo.esei.dai.hybridserver.XMLConfigurationLoader" property="exists.xmlconfigurationloader" classpathref="project.classpath"/>
+		<available file="configuration.xsd" property="exists.configuration.xsd"/>
+		<available file="configuration.xsl" property="exists.configuration.xslt"/>
 	</target>
 	
 	<target name="check-launcher" unless="exists.launcher" >
@@ -96,10 +98,22 @@
 		<echo message="Por favor, comprueba que esta clase existe y que está en el paquete correcto."/>
 	</target>
 	
-	<target name="check-report" depends="check-essential-files, check-launcher, check-server, check-request, check-response, check-request-method, check-response-status, check-configuration, check-xmlconfigurationloader"/>
+	<target name="check-xsd" unless="exists.configuration.xsd" >
+		<echo message="No se encuentra el esquema 'configuration.xsd'"/>
+		<echo message="Por favor, comprueba que el fichero existe y está en la raíz del proyecto."/>
+	</target>
+	
+	<target name="check-xslt" unless="exists.configuration.xslt" >
+		<echo message="No se encuentra la plantilla 'configuration.xsl'"/>
+		<echo message="Por favor, comprueba que el fichero existe y está en la raíz del proyecto."/>
+	</target>
+	
+	<target name="check-report" depends="check-essential-files, check-launcher, check-server, check-request, check-response, check-request-method, check-response-status, check-configuration, check-xmlconfigurationloader, check-xsd, check-xslt"/>
 	
 	<target name="release" depends="test-report, check-report">
 		<zip destfile="${group}-second.zip">
+			<zipfileset file="configuration.xsd"/>
+			<zipfileset file="configuration.xsl"/>
 			<zipfileset dir="src" prefix="src"/>
 			<zipfileset dir="${report.dir}"/>
 			<zipfileset file="README.md"/>

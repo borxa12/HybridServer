@@ -22,7 +22,6 @@ public class Launcher {
 					try {
 						config = loader.load(reader);
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 					HybridServer hybridServer = new HybridServer(config);

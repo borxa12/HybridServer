@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
-//import java.util.Map;
 import java.util.UUID;
 
 import es.uvigo.esei.dai.hybridserver.http.HTTPParseException;
@@ -46,7 +45,6 @@ public class Worker implements Runnable {
 		try {
 			this.connection = DriverManager.getConnection(properties.getProperty("db.url"),
 					properties.getProperty("db.user"), properties.getProperty("db.password"));
-			//this.WEB_PAGES = new DBDAOhtml(connection);
 			this.controller = null;
 			this.flag = true;
 
@@ -64,7 +62,6 @@ public class Worker implements Runnable {
 		try {
 			this.connection = DriverManager.getConnection(config.getDbURL(),
 					config.getDbUser(), config.getDbPassword());
-			//this.WEB_PAGES = new DBDAOhtml(connection);
 			this.controller = null;
 			this.flag = true;
 
@@ -85,10 +82,11 @@ public class Worker implements Runnable {
 
 			if (this.flag) {
 				if (this.connection == null) {
-				//crea el response cuando no hay bd	
+					// Crea el response cuando no hay BD
 					response.setStatus(HTTPResponseStatus.S200);
 					response.putParameter("Content-Type", "text/html");
 					response.setContent(WEB);
+					
 					// POST
 					if (request.getMethod() == HTTPRequestMethod.POST) {
 						String uuid = UUID.randomUUID().toString();

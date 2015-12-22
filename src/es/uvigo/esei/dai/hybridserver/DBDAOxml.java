@@ -10,7 +10,7 @@ import es.uvigo.esei.dai.hybridserver.http.HTTPRequest;
 public class DBDAOxml implements Pages {
 	
 	private Connection connection;
-//conexion xml
+	
 	public DBDAOxml(Connection connection) {
 		this.connection = connection;
 	}

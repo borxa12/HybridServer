@@ -47,19 +47,19 @@ public class XMLConfigurationLoader {
 	
 	public static Document loadAndValidateWithExternalXSD(String documentPath, String schemaPath) 
 	throws ParserConfigurationException, SAXException, IOException {
-		// ConstrucciÃ³n del schema
+		// Construccion del schema
 		SchemaFactory schemaFactory = 
 			SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
 		Schema schema = schemaFactory.newSchema(new File(schemaPath));
 		
-		// ConstrucciÃ³n del parser del documento. Se establece el esquema y se activa
-		// la validaciÃ³n y comprobaciÃ³n de namespaces
+		// Construccion del parser del documento. Se establece el esquema y se activa
+		// la validacion y comprobacion de namespaces
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		factory.setValidating(false);
 		factory.setNamespaceAware(true);
 		factory.setSchema(schema);
 		
-		// Se aÃ±ade el manejador de errores
+		// Se añade el manejador de errores
 		DocumentBuilder builder = factory.newDocumentBuilder();
 		builder.setErrorHandler(new SimpleErrorHandler());
 		

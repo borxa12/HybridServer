@@ -11,7 +11,6 @@ public class DBDAOxslt implements Pages {
 
 	private Connection connection;
 	
-	//conexion xslt
 	public DBDAOxslt(Connection connection) {
 		this.connection = connection;
 	}

@@ -53,11 +53,15 @@ public class Controller {
 		this.config = config;
 	}
 	
-	public HTTPResponse createResponse(){
-		//Crea el resonnse
+	public HTTPResponse createResponse() {
 		this.response.setVersion("HTTP/1.1");
 		this.response.setStatus(HTTPResponseStatus.S200);
-		String type = request.getResourcePath()[0];
+		String type;
+		if(request.getResourcePath().length == 0) {
+			type = "html";
+		} else {
+			type = request.getResourcePath()[0];
+		}
 		switch (type) {
 			case "html":
 				this.WEB_PAGES = new DBDAOhtml(connection);
@@ -159,19 +163,32 @@ public class Controller {
 
 	public void get(String type){
 		// Si ResourceName no contiene HTML: error 400
-		if (!this.request.getResourceName().contains(type))
-			this.response.setStatus(HTTPResponseStatus.S400);
-		else { // Si no hay UUID
+		if (!this.request.getResourceName().contains(type)){
+			this.response.setStatus(HTTPResponseStatus.S200);
+			StringBuilder uuids = new StringBuilder();
+			uuids.append("<h1>Hybrid Server</h1>");
+			uuids.append(this.WEB_PAGES.list());
+			List<HSService> remoteServices = connectService(config);
+			if(!remoteServices.isEmpty()) {
+				for (HSService hsService : remoteServices) {
+					String contenido = hsService.getUUID(type);
+					if(!contenido.isEmpty()) {
+						uuids.append(contenido);
+					}
+				}
+				this.response.setContent(uuids.toString());
+			} else {
+				this.response.setContent(this.WEB_PAGES.list());
+			}
+		} else { // Si no hay UUID
 			if (this.request.getResourceParameters().get("uuid") == null) {
 				StringBuilder uuids = new StringBuilder();
-				uuids.append("<h1>Local Server</h1>");
 				uuids.append(this.WEB_PAGES.list());
 				List<HSService> remoteServices = connectService(config);
 				if(!remoteServices.isEmpty()) {
 					for (HSService hsService : remoteServices) {
 						String contenido = hsService.getUUID(type);
 						if(!contenido.isEmpty()) {
-							uuids.append("<h1>" /* + Nombre Server */ + "</h1>");
 							uuids.append(contenido);
 						}
 					}
@@ -184,7 +201,7 @@ public class Controller {
 					if (type.equals("xml") && this.request.getResourceParameters().get("xslt") != null){
 						transform(request);
 					} else{
-					this.response.setContent(this.WEB_PAGES.get(this.request)); // UUIDexistente:visualiza página
+						this.response.setContent(this.WEB_PAGES.get(this.request)); // UUIDexistente:visualiza página
 					}
 				} else {
 					if (!this.WEB_PAGES.exists(this.request)) {
@@ -196,14 +213,20 @@ public class Controller {
 								if(contenido != null) break;
 							}
 							if(contenido != null) {
-								this.response.setContent(contenido);
+								if (type.equals("xml") && this.request.getResourceParameters().get("xslt") != null){
+									transform(request);
+								} else {
+									this.response.setContent(contenido);
+								}
 							} else {
 								this.response.setStatus(HTTPResponseStatus.S404); // UUID inexistente: error 404
 							}
 						} else {
 							this.response.setStatus(HTTPResponseStatus.S404); // UUID inexistente: error 404
 						}
-					} else this.response.setStatus(HTTPResponseStatus.S500);
+					} else {
+						this.response.setStatus(HTTPResponseStatus.S500);
+					}
 				}
 			}
 		}
@@ -214,25 +237,46 @@ public class Controller {
 		String xsltid = this.request.getResourceParameters().get("xslt");
 		DBDAOxslt dbdao = new DBDAOxslt(connection);
 		String xsdid = dbdao.recuperarXSD(xsltid);
-		
-		if(!dbdao.existsUUID(xsltid)){
+
+		List<HSService> remote = this.connectService(this.config);
+		if (xsdid == null){
+			for (HSService hsService : remote) {
+				String xsduuid = hsService.uuidXSDofXSLT(xsltid);
+				if(xsduuid != null){
+					xsdid = xsduuid;
+					break;
+				}	
+			}
+		}
+		boolean exists = false;
+		if(!dbdao.existsUUID(xsltid)){	
+			for (HSService hsService : remote) {
+				if(hsService.getContent(xsdid, "xsd") != null) {
+					exists = true;
+					break;
+				}
+			}
+		} else{
+			exists = true;
+		}
+		if (!exists){
 			this.response.setStatus(HTTPResponseStatus.S404);
 		} else {
-				try{
-					if(loadAndValidateWithExternalXSD(xmlid, xsdid) == null) {
-						this.response.setStatus(HTTPResponseStatus.S400);
-					} else {
-						try {
-							response.removeParameter("Content-Type");
-							response.putParameter("Content-Type", "text/html");
-							this.response.setContent(transformWithXSLT(xmlid, xsltid));
-						} catch (TransformerException e) {
-							this.response.setStatus(HTTPResponseStatus.S400);
-						}
-					}
-				} catch(ParserConfigurationException | SAXException | IOException e) {
+			try{
+				if(loadAndValidateWithExternalXSD(xmlid, xsdid) == null) {
 					this.response.setStatus(HTTPResponseStatus.S400);
+				} else {
+					try {
+						response.removeParameter("Content-Type");
+						response.putParameter("Content-Type", "text/html");
+						this.response.setContent(transformWithXSLT(xmlid, xsltid));
+					} catch (TransformerException e) {
+						this.response.setStatus(HTTPResponseStatus.S400);
+					}
 				}
+			} catch(ParserConfigurationException | SAXException | IOException e) {
+				this.response.setStatus(HTTPResponseStatus.S400);
+			}
 		}
 	}
 	
@@ -242,9 +286,29 @@ public class Controller {
 		SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
 		DBDAOxml dbdaoxml = new DBDAOxml(connection);
 		DBDAOxsd dbdaoxsd = new DBDAOxsd(connection);
-		
-		BufferedReader xsdReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(dbdaoxsd.getContent(xsd).getBytes())));
-		BufferedReader xmlReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(dbdaoxml.getContent(xml).getBytes())));
+		String xmlContent = dbdaoxml.getContent(xml);
+		String xsdContent = dbdaoxsd.getContent(xsd);
+		List<HSService> remote = this.connectService(this.config);
+		if(xmlContent == null){
+			for (HSService hsService : remote) {
+				String xmlC = hsService.getContent(xml, "xml");
+				if(xmlC != null){
+					xmlContent = xmlC;
+					break;
+				}
+			}
+		}
+		if(xsdContent == null){
+			for (HSService hsService : remote) {
+				String xsdC = hsService.getContent(xsd, "xsd");
+				if(xsdC != null){
+					xsdContent = xsdC;
+					break;
+				}
+			}
+		}
+		BufferedReader xsdReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(xsdContent.getBytes())));
+		BufferedReader xmlReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(xmlContent.getBytes())));
 		
 		Source xsdSource = new StreamSource(xsdReader);
 		InputSource xmlSource = new InputSource(xmlReader);
@@ -268,8 +332,29 @@ public class Controller {
 		DBDAOxml dbdaoxml = new DBDAOxml(connection);
 		DBDAOxslt dbdaoxslt = new DBDAOxslt(connection);
 
-		BufferedReader xsltReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(dbdaoxslt.getContent(xslt).getBytes())));
-		BufferedReader xmlReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(dbdaoxml.getContent(xml).getBytes())));
+		String xmlContent = dbdaoxml.getContent(xml);;
+		String xsltContent = dbdaoxslt.getContent(xslt);;
+		List<HSService> remote = this.connectService(this.config);
+		if(xmlContent == null){
+			for (HSService hsService : remote) {
+				String xmlC = hsService.getContent(xml, "xml");
+				if(xmlC != null){
+					xmlContent = xmlC;
+					break;
+				}
+			}
+		}
+		if(xsltContent == null){
+			for (HSService hsService : remote) {
+				String xsltC = hsService.getContent(xslt, "xslt");
+				if(xsltC != null){
+					xsltContent = xsltC;
+					break;
+				}
+			}
+		}
+		BufferedReader xsltReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(xsltContent.getBytes())));
+		BufferedReader xmlReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(xmlContent.getBytes())));
 		
 		Transformer transformer = null;
 		TransformerFactory tFactory = TransformerFactory.newInstance();
@@ -285,7 +370,6 @@ public class Controller {
 		if(config != null) {
 			List<ServerConfiguration> servers = config.getServers();
 			for(int i = 0; i < servers.size(); i++) {
-				//Service service = null;
 				try {
 					Service service = Service.create(new URL(servers.get(i).getWsdl()),
 							new QName(servers.get(i).getNamespace(),servers.get(i).getService()));

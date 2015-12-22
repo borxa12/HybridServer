@@ -57,7 +57,12 @@ public class Controller {
 		//Crea el resonnse
 		this.response.setVersion("HTTP/1.1");
 		this.response.setStatus(HTTPResponseStatus.S200);
-		String type = request.getResourcePath()[0];
+		String type;
+		if(request.getResourcePath().length == 0) {
+			type = "html";
+		} else {
+			type = request.getResourcePath()[0];
+		}
 		switch (type) {
 			case "html":
 				this.WEB_PAGES = new DBDAOhtml(connection);
@@ -159,51 +164,98 @@ public class Controller {
 
 	public void get(String type){
 		// Si ResourceName no contiene HTML: error 400
-		if (!this.request.getResourceName().contains(type))
-			this.response.setStatus(HTTPResponseStatus.S400);
-		else { // Si no hay UUID
+		if (!this.request.getResourceName().contains(type)){
+			this.response.setStatus(HTTPResponseStatus.S200);
+			StringBuilder uuids = new StringBuilder();
+			uuids.append("<h1>Hybrid Server</h1>");
+			uuids.append(this.WEB_PAGES.list());
+			List<HSService> remoteServices = connectService(config);
+			if(!remoteServices.isEmpty()) {
+				System.err.println("aquiQ1");
+				for (HSService hsService : remoteServices) {
+					String contenido = hsService.getUUID(type);
+					if(!contenido.isEmpty()) {
+						//uuids.append("<h1>" /* + Nombre Server */ + "</h1>");
+						uuids.append(contenido);
+						System.err.println("aquiQ2");
+					}
+				}
+				this.response.setContent(uuids.toString());
+			} else {
+				this.response.setContent(this.WEB_PAGES.list());
+				System.err.println("aquiQ3");
+			}
+			System.err.println("aqui1");
+		} else { // Si no hay UUID
+			System.err.println("aqui2");
 			if (this.request.getResourceParameters().get("uuid") == null) {
+				System.err.println("aqui3");
 				StringBuilder uuids = new StringBuilder();
-				uuids.append("<h1>Local Server</h1>");
+				//uuids.append("<h1>Local Server</h1>");
 				uuids.append(this.WEB_PAGES.list());
 				List<HSService> remoteServices = connectService(config);
 				if(!remoteServices.isEmpty()) {
+					System.err.println("aqui4");
 					for (HSService hsService : remoteServices) {
 						String contenido = hsService.getUUID(type);
 						if(!contenido.isEmpty()) {
-							uuids.append("<h1>" /* + Nombre Server */ + "</h1>");
+							//uuids.append("<h1>" /* + Nombre Server */ + "</h1>");
 							uuids.append(contenido);
+							System.err.println("aqui5");
 						}
 					}
 					this.response.setContent(uuids.toString());
 				} else {
 					this.response.setContent(this.WEB_PAGES.list());
+					System.err.println("aqui6");
 				}
 			} else { // Si hay UUID
+				System.err.println("aqui7");
 				if (this.WEB_PAGES.exists(this.request)) {
+					System.err.println("aqui8");
 					if (type.equals("xml") && this.request.getResourceParameters().get("xslt") != null){
+						System.err.println("aqui9");
 						transform(request);
 					} else{
-					this.response.setContent(this.WEB_PAGES.get(this.request)); // UUIDexistente:visualiza página
+						System.err.println("aqui10");
+						this.response.setContent(this.WEB_PAGES.get(this.request)); // UUIDexistente:visualiza página
 					}
 				} else {
+					System.err.println("aqui11");
 					if (!this.WEB_PAGES.exists(this.request)) {
+						System.err.println("aqui12");
 						List<HSService> remoteServices = connectService(config);
 						if(!remoteServices.isEmpty()) {
+							System.err.println("aqui13");
 							String contenido = null;
 							for (HSService hsService : remoteServices) {
+								System.err.println("aqui14");
 								contenido = hsService.getContent(this.request.getResourceParameters().get("uuid"),type);
 								if(contenido != null) break;
 							}
 							if(contenido != null) {
-								this.response.setContent(contenido);
+								System.err.println("aqui15");
+								if (type.equals("xml") && this.request.getResourceParameters().get("xslt") != null){
+									System.err.println("aqui15.1");
+									transform(request);
+								} else{
+									System.err.println("aqui15.2");
+									this.response.setContent(contenido);
+									//this.response.setContent(this.WEB_PAGES.get(this.request)); // UUIDexistente:visualiza página
+								}
+								//
 							} else {
+								System.err.println("aqui16");
 								this.response.setStatus(HTTPResponseStatus.S404); // UUID inexistente: error 404
 							}
 						} else {
+							System.err.println("aqui17");
 							this.response.setStatus(HTTPResponseStatus.S404); // UUID inexistente: error 404
 						}
-					} else this.response.setStatus(HTTPResponseStatus.S500);
+					} else {
+						System.err.println("aqui18");
+						this.response.setStatus(HTTPResponseStatus.S500);
+					}
 				}
 			}
 		}
@@ -214,25 +266,59 @@ public class Controller {
 		String xsltid = this.request.getResourceParameters().get("xslt");
 		DBDAOxslt dbdao = new DBDAOxslt(connection);
 		String xsdid = dbdao.recuperarXSD(xsltid);
-		
-		if(!dbdao.existsUUID(xsltid)){
+
+		List<HSService> remote = this.connectService(this.config);
+		if (xsdid == null){
+			System.err.println("aquiT1");
+			for (HSService hsService : remote) {
+				System.err.println("aquiT2");
+				String xsduuid = hsService.uuidXSDofXSLT(xsltid);
+				if(xsduuid != null){
+					System.err.println("aquiT3");
+					xsdid = xsduuid;
+					break;
+				}	
+			}
+		}
+		boolean exists = false;
+		if(!dbdao.existsUUID(xsltid)){	
+			System.err.println("aquiT4");
+			for (HSService hsService : remote) {
+				System.err.println("aquiT5");
+				if(hsService.getContent(xsdid, "xsd") != null){
+					System.err.println("aquiT6");
+					exists = true;
+					break;
+				}
+			}
+		} else{
+			System.err.println("aquiT7");
+			exists = true;
+		}
+		if (!exists){
+			System.err.println("aquiT8");
 			this.response.setStatus(HTTPResponseStatus.S404);
 		} else {
-				try{
-					if(loadAndValidateWithExternalXSD(xmlid, xsdid) == null) {
-						this.response.setStatus(HTTPResponseStatus.S400);
-					} else {
-						try {
-							response.removeParameter("Content-Type");
-							response.putParameter("Content-Type", "text/html");
-							this.response.setContent(transformWithXSLT(xmlid, xsltid));
-						} catch (TransformerException e) {
-							this.response.setStatus(HTTPResponseStatus.S400);
-						}
-					}
-				} catch(ParserConfigurationException | SAXException | IOException e) {
+			try{
+				System.err.println("aquiT9");
+				if(loadAndValidateWithExternalXSD(xmlid, xsdid) == null) {
 					this.response.setStatus(HTTPResponseStatus.S400);
+					System.err.println("aquiT10");
+				} else {
+					try {
+						System.err.println("aquiT11");
+						response.removeParameter("Content-Type");
+						response.putParameter("Content-Type", "text/html");
+						this.response.setContent(transformWithXSLT(xmlid, xsltid));
+						System.err.println("aquiA1");
+						System.err.println(this.response.getContent());
+					} catch (TransformerException e) {
+						this.response.setStatus(HTTPResponseStatus.S400);
+					}
 				}
+			} catch(ParserConfigurationException | SAXException | IOException e) {
+				this.response.setStatus(HTTPResponseStatus.S400);
+			}
 		}
 	}
 	
@@ -242,9 +328,29 @@ public class Controller {
 		SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
 		DBDAOxml dbdaoxml = new DBDAOxml(connection);
 		DBDAOxsd dbdaoxsd = new DBDAOxsd(connection);
-		
-		BufferedReader xsdReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(dbdaoxsd.getContent(xsd).getBytes())));
-		BufferedReader xmlReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(dbdaoxml.getContent(xml).getBytes())));
+		String xmlContent = dbdaoxml.getContent(xml);
+		String xsdContent = dbdaoxsd.getContent(xsd);
+		List<HSService> remote = this.connectService(this.config);
+		if(xmlContent == null){
+			for (HSService hsService : remote) {
+				String xmlC = hsService.getContent(xml, "xml");
+				if(xmlC != null){
+					xmlContent = xmlC;
+					break;
+				}
+			}
+		}
+		if(xsdContent == null){
+			for (HSService hsService : remote) {
+				String xsdC = hsService.getContent(xsd, "xsd");
+				if(xsdC != null){
+					xsdContent = xsdC;
+					break;
+				}
+			}
+		}
+		BufferedReader xsdReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(xsdContent.getBytes())));
+		BufferedReader xmlReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(xmlContent.getBytes())));
 		
 		Source xsdSource = new StreamSource(xsdReader);
 		InputSource xmlSource = new InputSource(xmlReader);
@@ -268,8 +374,35 @@ public class Controller {
 		DBDAOxml dbdaoxml = new DBDAOxml(connection);
 		DBDAOxslt dbdaoxslt = new DBDAOxslt(connection);
 
-		BufferedReader xsltReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(dbdaoxslt.getContent(xslt).getBytes())));
-		BufferedReader xmlReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(dbdaoxml.getContent(xml).getBytes())));
+		String xmlContent = dbdaoxml.getContent(xml);;
+		String xsltContent = dbdaoxslt.getContent(xslt);;
+		List<HSService> remote = this.connectService(this.config);
+		if(xmlContent == null){
+			System.err.println("aquiX1");
+			for (HSService hsService : remote) {
+				String xmlC = hsService.getContent(xml, "xml");
+				System.err.println("aquiX2");
+				if(xmlC != null){
+					System.err.println("aquiX3");
+					xmlContent = xmlC;
+					break;
+				}
+			}
+		}
+		if(xsltContent == null){
+			System.err.println("aquiX4");
+			for (HSService hsService : remote) {
+				System.err.println("aquiX5");
+				String xsltC = hsService.getContent(xslt, "xslt");
+				if(xsltC != null){
+					System.err.println("aquiX6");
+					xsltContent = xsltC;
+					break;
+				}
+			}
+		}
+		BufferedReader xsltReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(xsltContent.getBytes())));
+		BufferedReader xmlReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(xmlContent.getBytes())));
 		
 		Transformer transformer = null;
 		TransformerFactory tFactory = TransformerFactory.newInstance();
@@ -277,6 +410,8 @@ public class Controller {
 		
 		StringWriter writer = new StringWriter();
 		transformer.transform(new StreamSource(xmlReader), new StreamResult(writer));
+		System.err.println(writer.toString());
+		System.err.println("aquiX7");
 		return writer.toString();
 	}
 	

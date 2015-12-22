@@ -120,19 +120,19 @@ public class HSImp implements HSService {
 			case "xml":
 				uuids = this.getUUIDXML();
 				for(int i = 0; i < uuids.size(); i++) {
-					links.append("<a href=\"html?uuid=" + uuids.get(i) + "\">" + uuids.get(i) + "</a><br/>");
+					links.append("<a href=\"xml?uuid=" + uuids.get(i) + "\">" + uuids.get(i) + "</a><br/>");
 				}
 				break;
 			case "xsd":
 				uuids = this.getUUIDXSD();
 				for(int i = 0; i < uuids.size(); i++) {
-					links.append("<a href=\"html?uuid=" + uuids.get(i) + "\">" + uuids.get(i) + "</a><br/>");
+					links.append("<a href=\"xsd?uuid=" + uuids.get(i) + "\">" + uuids.get(i) + "</a><br/>");
 				}
 				break;
 			case "xslt":
-				uuids = this.getUUIDXSD();
+				uuids = this.getUUIDXSLT();
 				for(int i = 0; i < uuids.size(); i++) {
-					links.append("<a href=\"html?uuid=" + uuids.get(i) + "\">" + uuids.get(i) + "</a><br/>");
+					links.append("<a href=\"xsd?uuid=" + uuids.get(i) + "\">" + uuids.get(i) + "</a><br/>");
 				}
 				break;
 		}
